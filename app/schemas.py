@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -81,6 +81,7 @@ class RecipeOut(BaseModel):
     servings: int | None
     created_at: datetime
     is_planned: bool
+    is_scheduled: bool
     ingredients: list[RecipeIngredientOut]
 
     @classmethod
@@ -93,6 +94,7 @@ class RecipeOut(BaseModel):
             servings=recipe.servings,
             created_at=recipe.created_at,
             is_planned=recipe.is_planned,
+            is_scheduled=bool(recipe.calendar_entries),
             ingredients=[
                 RecipeIngredientOut.from_recipe_ingredient(ri)
                 for ri in recipe.recipe_ingredients
@@ -113,3 +115,35 @@ class GroceryListItem(BaseModel):
     # unit types (e.g. tbsp vs. lb) that can't be safely combined. Amounts
     # are always shown separately, never summed -- see app/units.py.
     mixed_units: bool
+
+
+# --- Calendar ---
+
+class StartCalendarRequest(BaseModel):
+    length_weeks: int
+
+
+class AddCalendarEntryRequest(BaseModel):
+    date: date
+    meal_slot: str
+    recipe_id: int
+
+
+class CalendarEntryOut(BaseModel):
+    id: int
+    recipe_id: int
+    recipe_title: str
+
+
+class CalendarDayOut(BaseModel):
+    date: date
+    breakfast: CalendarEntryOut | None
+    lunch: CalendarEntryOut | None
+    dinner: CalendarEntryOut | None
+
+
+class CalendarViewOut(BaseModel):
+    start_date: date
+    end_date: date
+    length_weeks: int
+    days: list[CalendarDayOut]

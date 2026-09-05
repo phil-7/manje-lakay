@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
-from app.routers import grocery, pages, recipes
+from app.routers import calendar, grocery, pages, recipes
 
 # Creates any tables that don't exist yet. Safe to call every startup --
 # it does nothing to tables that are already there.
@@ -24,6 +24,7 @@ app.add_middleware(
 
 app.include_router(recipes.router)
 app.include_router(grocery.router)
+app.include_router(calendar.router)
 app.include_router(pages.router)
 
 # Only CSS/JS live here now -- the HTML itself is rendered by pages.py via

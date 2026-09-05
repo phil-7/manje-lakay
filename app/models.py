@@ -3,12 +3,14 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean,
     Column,
+    Date,
     DateTime,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -88,5 +90,51 @@ class Recipe(Base):
         order_by="RecipeIngredient.id",
     )
 
+    calendar_entries = relationship(
+        "CalendarEntry", back_populates="recipe", cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<Recipe {self.title!r}>"
+
+
+class CalendarSettings(Base):
+    """
+    A single row (id is always 1) describing the CURRENT calendar: when
+    it starts and how many weeks it spans. There's only ever one active
+    calendar at a time -- "Start New Calendar" wipes CalendarEntry rows
+    and replaces this row's start_date/length_weeks, it doesn't create
+    a second calendar to keep around.
+    """
+
+    __tablename__ = "calendar_settings"
+
+    id = Column(Integer, primary_key=True, default=1)
+    start_date = Column(Date, nullable=False)
+    length_weeks = Column(Integer, nullable=False)
+
+
+class CalendarEntry(Base):
+    """
+    One recipe scheduled in one meal slot on one date. Each day has
+    exactly three slots -- breakfast, lunch, dinner -- and the
+    (date, meal_slot) pair is unique: assigning a new recipe to an
+    already-filled slot replaces what was there, it doesn't stack.
+
+    Placing a recipe here also sets its is_planned flag to True (see
+    app/calendar.py) -- but removing it here does NOT automatically
+    unplan the recipe, in case it's still scheduled elsewhere.
+    """
+
+    __tablename__ = "calendar_entries"
+    __table_args__ = (UniqueConstraint("date", "meal_slot", name="uq_calendar_date_slot"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, nullable=False, index=True)
+    meal_slot = Column(String, nullable=False)  # "breakfast" | "lunch" | "dinner"
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+
+    recipe = relationship("Recipe", back_populates="calendar_entries")
+
+    def __repr__(self):
+        return f"<CalendarEntry {self.date} {self.meal_slot} recipe_id={self.recipe_id}>"
