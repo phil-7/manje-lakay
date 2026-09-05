@@ -1,5 +1,11 @@
 const summaryEl = document.getElementById("planned-summary");
 const resultsEl = document.getElementById("grocery-results");
+const showRecipesCheckbox = document.getElementById("show-recipes-checkbox");
+
+function formatAmount(entry) {
+  const qty = entry.quantity != null ? formatAsFraction(entry.quantity) : "";
+  return [qty, entry.unit].filter(Boolean).join(" ");
+}
 
 function renderGroceryList(items) {
   if (items.length === 0) {
@@ -11,11 +17,25 @@ function renderGroceryList(items) {
   for (const item of items) {
     const row = document.createElement("div");
     row.className = "grocery-item";
+
+    const warning = item.mixed_units
+      ? `<span class="mixed-units-badge" title="These use different unit types (e.g. volume vs. weight) and aren't combined automatically">Mixed units</span>`
+      : "";
+
+    // Each recipe's amount gets its own line, listed vertically -- the
+    // "entry-recipe" span is what the show/hide toggle controls.
+    const entryLines = item.entries
+      .map((entry) => {
+        const amount = formatAmount(entry);
+        return `<li>${amount ? amount + " " : ""}<span class="entry-recipe">-- ${entry.recipe}</span></li>`;
+      })
+      .join("");
+
     row.innerHTML = `
       <input type="checkbox" class="have-it-checkbox" />
       <div class="grocery-item-text">
-        <span class="grocery-item-name">${item.ingredient}</span>
-        <span class="grocery-item-recipes">${item.recipes.join(", ")}</span>
+        <span class="grocery-item-name">${item.ingredient} ${warning}</span>
+        <ul class="grocery-item-entries">${entryLines}</ul>
       </div>
     `;
     // Purely visual, in-memory state for this shopping trip -- checking an
@@ -55,5 +75,9 @@ async function loadGroceryList() {
     resultsEl.innerHTML = `<p class="empty-state">Couldn't load your grocery list. Is the server running?</p>`;
   }
 }
+
+showRecipesCheckbox.addEventListener("change", () => {
+  resultsEl.classList.toggle("hide-recipe-names", !showRecipesCheckbox.checked);
+});
 
 loadGroceryList();

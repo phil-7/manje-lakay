@@ -1,6 +1,6 @@
 ﻿from sqlalchemy.orm import Session
 
-from app.models import Recipe, Ingredient
+from app.models import Ingredient, Recipe, RecipeIngredient
 from app.scraper import scrape_recipe_ingredients
 
 
@@ -13,14 +13,44 @@ def get_or_create_ingredient(db: Session, name: str) -> Ingredient:
     return Ingredient(name=name)
 
 
+def _build_recipe_ingredients_from_entries(
+    db: Session, entries: list[dict]
+) -> list[RecipeIngredient]:
+    """
+    Build RecipeIngredient rows from structured entries -- used for manual
+    entry, editing, and confirming a scrape. Each entry is a dict with
+    "name", and optionally "quantity" and "unit". De-duplicates by name,
+    keeping the first occurrence if the same ingredient is listed twice.
+    """
+    seen_names = set()
+    result = []
+    for entry in entries:
+        name = (entry.get("name") or "").strip().lower()
+        if not name or name in seen_names:
+            continue
+        seen_names.add(name)
+        result.append(
+            RecipeIngredient(
+                ingredient=get_or_create_ingredient(db, name),
+                quantity=entry.get("quantity"),
+                unit=entry.get("unit"),
+            )
+        )
+    return result
+
+
 def create_manual_recipe(
     db: Session,
     title: str,
     instructions: str | None,
-    ingredient_names: list[str],
+    servings: int | None,
+    ingredients: list[dict],
 ) -> Recipe:
     """
-    Save a recipe the user typed in themselves (not scraped).
+    Save a recipe the user typed in themselves (not scraped). Ingredients
+    are already structured (name/quantity/unit picked via form fields,
+    same as editing) -- no free-text parsing involved, which avoids the
+    NLP parser guessing wrong on unusual phrasing.
 
     Raises ValueError if the title is empty or no ingredients are given --
     we don't allow saving an empty/placeholder recipe.
@@ -29,48 +59,83 @@ def create_manual_recipe(
     if not title:
         raise ValueError("Recipe title cannot be empty.")
 
-    cleaned_names = {name.strip().lower() for name in ingredient_names if name.strip()}
-    if not cleaned_names:
-        raise ValueError("Recipe must have at least one ingredient.")
-
     if instructions is not None:
         instructions = instructions.strip() or None
 
-    recipe = Recipe(title=title, source_url=None, instructions=instructions)
-    recipe.ingredients = [get_or_create_ingredient(db, name) for name in cleaned_names]
+    recipe_ingredients = _build_recipe_ingredients_from_entries(db, ingredients)
+    if not recipe_ingredients:
+        raise ValueError("Recipe must have at least one ingredient.")
+
+    recipe = Recipe(
+        title=title,
+        source_url=None,
+        instructions=instructions,
+        servings=servings,
+    )
+    recipe.recipe_ingredients = recipe_ingredients
 
     db.add(recipe)
     db.commit()
     return recipe
 
 
-def create_scraped_recipe(db: Session, url: str) -> Recipe:
+def preview_scraped_recipe(url: str) -> dict:
     """
-    Scrape a recipe URL for its title and ingredients, then save it.
+    Scrape a URL and return a DRAFT for the user to review/edit before
+    anything is saved. Deliberately touches the database not at all --
+    not even to look up or create Ingredient rows -- since the user
+    might cancel or change things before confirming.
 
-    IMPORTANT: instructions are always left as None here. We only ever
-    pull ingredients from a scraped page, never instructions -- the
-    user has to type those in themselves afterward, for legal reasons.
-
-    Raises ValueError if:
-      - the page has no Recipe JSON-LD at all (bubbled up from the scraper)
-      - the JSON-LD had no title
-      - the JSON-LD had no usable ingredients
-    In any of those cases, nothing is saved -- the caller should fall
-    back to prompting the user for manual entry.
+    Raises ValueError if the page has no Recipe JSON-LD, no title, or
+    no usable ingredients (same cases as before).
     """
-    title, ingredient_names = scrape_recipe_ingredients(url)
+    title, servings, parsed_lines = scrape_recipe_ingredients(url)
 
     if not title or not title.strip():
         raise ValueError(f"Could not find a recipe title at {url}")
-    title = title.strip()
-
-    cleaned_names = {name.strip().lower() for name in ingredient_names if name.strip()}
-    if not cleaned_names:
+    if not parsed_lines:
         raise ValueError(f"Could not find any usable ingredients at {url}")
 
-    recipe = Recipe(title=title, source_url=url, instructions=None)
-    recipe.ingredients = [get_or_create_ingredient(db, name) for name in cleaned_names]
+    return {
+        "title": title.strip(),
+        "servings": servings,
+        "source_url": url,
+        "ingredients": [
+            {"name": p.name, "quantity": p.quantity, "unit": p.unit}
+            for p in parsed_lines
+        ],
+    }
+
+
+def create_recipe_from_confirmed_scrape(
+    db: Session,
+    title: str,
+    servings: int | None,
+    source_url: str,
+    ingredients: list[dict],
+) -> Recipe:
+    """
+    Save a recipe from a scrape the user has already reviewed and
+    possibly corrected. `ingredients` is already structured -- no
+    re-parsing here, since the user may have fixed quantities/units
+    or added ingredients by hand in the review step.
+
+    IMPORTANT: instructions are always None here -- never scraped, and
+    not editable at this step either. Same legal reason as everywhere
+    else in this app.
+
+    Raises ValueError if the title is empty or no ingredients remain.
+    """
+    title = title.strip()
+    if not title:
+        raise ValueError("Recipe title cannot be empty.")
+
+    recipe_ingredients = _build_recipe_ingredients_from_entries(db, ingredients)
+    if not recipe_ingredients:
+        raise ValueError("Recipe must have at least one ingredient.")
+
+    recipe = Recipe(title=title, source_url=source_url, instructions=None, servings=servings)
+    recipe.recipe_ingredients = recipe_ingredients
 
     db.add(recipe)
     db.commit()
@@ -97,17 +162,21 @@ def update_recipe(
     recipe_id: int,
     title: str,
     instructions: str | None,
-    ingredient_names: list[str],
+    servings: int | None,
+    ingredients: list[dict],
 ) -> Recipe:
     """
-    Edit an existing recipe's title, instructions, and ingredients.
+    Edit an existing recipe's title, instructions, servings, and
+    ingredients. Unlike creation, `ingredients` here is already
+    structured (list of {"name", "quantity", "unit"} dicts) -- this is
+    for the edit form, where the user adjusts fields directly rather
+    than typing a free-text line to be re-parsed.
 
-    The ingredient list is fully REPLACED, not merged -- whatever you pass
-    in becomes the complete new list. Same validation as creating a recipe:
-    title and at least one ingredient are required.
+    The ingredient list is fully REPLACED, not merged. Same validation
+    as creating a recipe: title and at least one ingredient required.
 
-    Raises ValueError if the recipe doesn't exist, the title is empty, or
-    no ingredients are given.
+    Raises ValueError if the recipe doesn't exist, the title is empty,
+    or no ingredients are given.
     """
     recipe = db.query(Recipe).filter_by(id=recipe_id).first()
     if recipe is None:
@@ -117,8 +186,8 @@ def update_recipe(
     if not title:
         raise ValueError("Recipe title cannot be empty.")
 
-    cleaned_names = {name.strip().lower() for name in ingredient_names if name.strip()}
-    if not cleaned_names:
+    recipe_ingredients = _build_recipe_ingredients_from_entries(db, ingredients)
+    if not recipe_ingredients:
         raise ValueError("Recipe must have at least one ingredient.")
 
     if instructions is not None:
@@ -126,7 +195,8 @@ def update_recipe(
 
     recipe.title = title
     recipe.instructions = instructions
-    recipe.ingredients = [get_or_create_ingredient(db, name) for name in cleaned_names]
+    recipe.servings = servings
+    recipe.recipe_ingredients = recipe_ingredients
 
     db.commit()
     return recipe
@@ -134,9 +204,10 @@ def update_recipe(
 
 def delete_recipe(db: Session, recipe_id: int) -> None:
     """
-    Delete a recipe. The ingredients it used are NOT deleted -- they stay
-    in the database in case other recipes still reference them (or for
-    reuse later), since Ingredient rows are shared across recipes.
+    Delete a recipe. Its RecipeIngredient rows (the recipe-specific
+    quantity/unit pairings) are deleted automatically via cascade. The
+    underlying Ingredient rows are NOT deleted -- they stay in the
+    database in case other recipes still reference them.
 
     Raises ValueError if no recipe with that id exists.
     """

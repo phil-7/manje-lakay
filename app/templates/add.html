@@ -27,14 +27,15 @@
     </label>
 
     <label>
-      Ingredients
-      <div class="ingredient-rows" id="ingredient-rows">
-        <div class="ingredient-row">
-          <input type="text" class="ingredient-input" placeholder="e.g. garlic" />
-          <button type="button" class="remove-ingredient">&times;</button>
-        </div>
-      </div>
+      Servings <span class="hint">(optional)</span>
+      <input type="number" id="manual-servings" min="1" step="1" />
     </label>
+
+    <label>
+      Ingredients
+    </label>
+    <p class="hint fraction-banner">Use standard fractions like "1/2" or "1 1/4", not decimals like ".5" or ".333".</p>
+    <div class="ingredient-edit-rows" id="ingredient-rows"></div>
     <button type="button" class="add-ingredient" id="add-ingredient">+ Add ingredient</button>
 
     <label>

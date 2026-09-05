@@ -32,44 +32,31 @@ function clearMessage() {
   messageEl.className = "message";
 }
 
-// --- Dynamic ingredient rows ---
-function makeIngredientRow() {
-  const row = document.createElement("div");
-  row.className = "ingredient-row";
-  row.innerHTML = `
-    <input type="text" class="ingredient-input" placeholder="e.g. garlic" />
-    <button type="button" class="remove-ingredient">&times;</button>
-  `;
+// --- Dynamic ingredient rows: same structured quantity/unit/name fields
+// used in the scrape-review popup and the edit modal (from
+// ingredient-fields.js), so manual entry can't produce "weird lines"
+// the parser might misread -- the user picks quantity/unit directly. ---
+function addIngredientRow(ing) {
+  const row = makeIngredientEditRow(ing);
   row.querySelector(".remove-ingredient").addEventListener("click", () => {
     // Always leave at least one row so the form never looks broken/empty.
     if (ingredientRows.children.length > 1) {
       row.remove();
     } else {
-      row.querySelector(".ingredient-input").value = "";
+      row.querySelectorAll("input").forEach((input) => (input.value = ""));
+      row.querySelector(".ing-unit-select").value = "";
     }
   });
-  return row;
+  ingredientRows.appendChild(row);
 }
 
-addIngredientBtn.addEventListener("click", () => {
-  ingredientRows.appendChild(makeIngredientRow());
-});
-
-// Wire up the remove button on the one row that ships in the HTML.
-ingredientRows.querySelector(".remove-ingredient").addEventListener("click", () => {
-  const inputs = ingredientRows.querySelectorAll(".ingredient-input");
-  if (ingredientRows.children.length > 1) {
-    ingredientRows.children[0].remove();
-  } else {
-    inputs[0].value = "";
-  }
-});
-
-function getIngredientNames() {
-  return Array.from(ingredientRows.querySelectorAll(".ingredient-input"))
-    .map((input) => input.value.trim())
-    .filter((value) => value.length > 0);
+function resetIngredientRows() {
+  ingredientRows.innerHTML = "";
+  addIngredientRow(null);
 }
+
+addIngredientBtn.addEventListener("click", () => addIngredientRow(null));
+resetIngredientRows(); // start with one blank row
 
 // --- Submit handlers ---
 scrapeForm.addEventListener("submit", async (event) => {
@@ -80,17 +67,26 @@ scrapeForm.addEventListener("submit", async (event) => {
   submitBtn.disabled = true;
   clearMessage();
   try {
-    const response = await fetch(`${API_BASE}/recipes/scrape`, {
+    const response = await fetch(`${API_BASE}/recipes/scrape-preview`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
     });
-    const data = await response.json();
+    const preview = await response.json();
     if (!response.ok) {
-      throw new Error(data.detail || "Something went wrong.");
+      throw new Error(preview.detail || "Something went wrong.");
     }
-    showMessage(`Saved "${data.title}" with ${data.ingredients.length} ingredients.`, "success");
-    scrapeForm.reset();
+    // Nothing is saved yet -- the popup lets the user review/fix/add
+    // ingredients before anything touches the database.
+    showScrapePreviewModal(preview, {
+      onConfirmed: (savedRecipe) => {
+        showMessage(
+          `Saved "${savedRecipe.title}" with ${savedRecipe.ingredients.length} ingredients.`,
+          "success"
+        );
+        scrapeForm.reset();
+      },
+    });
   } catch (err) {
     showMessage(err.message, "error");
   } finally {
@@ -102,7 +98,11 @@ manualForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const title = document.getElementById("manual-title").value.trim();
   const instructions = document.getElementById("manual-instructions").value.trim();
-  const ingredient_names = getIngredientNames();
+  const servingsRaw = document.getElementById("manual-servings").value;
+  const servings = servingsRaw ? parseInt(servingsRaw, 10) : null;
+  const ingredients = Array.from(ingredientRows.querySelectorAll(".ingredient-edit-row"))
+    .map(readIngredientEditRow)
+    .filter(Boolean);
   const submitBtn = manualForm.querySelector(".submit-btn");
 
   submitBtn.disabled = true;
@@ -114,7 +114,8 @@ manualForm.addEventListener("submit", async (event) => {
       body: JSON.stringify({
         title,
         instructions: instructions || null,
-        ingredient_names,
+        servings,
+        ingredients,
       }),
     });
     const data = await response.json();
@@ -123,9 +124,7 @@ manualForm.addEventListener("submit", async (event) => {
     }
     showMessage(`Saved "${data.title}" with ${data.ingredients.length} ingredients.`, "success");
     manualForm.reset();
-    // Collapse ingredient rows back down to a single empty one.
-    ingredientRows.innerHTML = "";
-    ingredientRows.appendChild(makeIngredientRow());
+    resetIngredientRows();
   } catch (err) {
     showMessage(err.message, "error");
   } finally {

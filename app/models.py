@@ -1,18 +1,18 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, Integer, String, Text, DateTime, ForeignKey, Table
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from app.database import Base
-
-# Many-to-many link between recipes and ingredients.
-# No "amount" column on purpose -- quantities are out of scope for now.
-recipe_ingredients = Table(
-    "recipe_ingredients",
-    Base.metadata,
-    Column("recipe_id", Integer, ForeignKey("recipes.id"), primary_key=True),
-    Column("ingredient_id", Integer, ForeignKey("ingredients.id"), primary_key=True),
-)
 
 
 class Ingredient(Base):
@@ -23,12 +23,36 @@ class Ingredient(Base):
     # from two different recipes collapse into one row.
     name = Column(String, unique=True, nullable=False, index=True)
 
-    recipes = relationship(
-        "Recipe", secondary=recipe_ingredients, back_populates="ingredients"
-    )
-
     def __repr__(self):
         return f"<Ingredient {self.name!r}>"
+
+
+class RecipeIngredient(Base):
+    """
+    The link between a Recipe and an Ingredient -- but unlike a plain
+    many-to-many table, this is its own real row, because it carries
+    data specific to THIS pairing: how much of this ingredient THIS
+    recipe uses. The same Ingredient (e.g. "garlic") can be linked to
+    many recipes, each with its own quantity/unit.
+    """
+
+    __tablename__ = "recipe_ingredients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    ingredient_id = Column(Integer, ForeignKey("ingredients.id"), nullable=False)
+
+    # Both nullable -- plenty of ingredient lines have no clean amount
+    # ("cilantro for garnishing") or an informal one we can't convert
+    # ("a pinch of salt", unit="pinch").
+    quantity = Column(Float, nullable=True)
+    unit = Column(String, nullable=True)
+
+    recipe = relationship("Recipe", back_populates="recipe_ingredients")
+    ingredient = relationship("Ingredient")
+
+    def __repr__(self):
+        return f"<RecipeIngredient {self.quantity} {self.unit} {self.ingredient_id}>"
 
 
 class Recipe(Base):
@@ -45,6 +69,11 @@ class Recipe(Base):
     # ingredients, not this field -- for legal reasons.
     instructions = Column(Text, nullable=True)
 
+    # Best-effort serving count. Scraped from the page's "recipeYield"
+    # when present; typed in manually otherwise. Just a number, not tied
+    # to ingredient scaling (yet).
+    servings = Column(Integer, nullable=True)
+
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Whether this recipe is currently on the "recipes I plan to make" list.
@@ -52,8 +81,11 @@ class Recipe(Base):
     # or it isn't.
     is_planned = Column(Boolean, default=False, nullable=False)
 
-    ingredients = relationship(
-        "Ingredient", secondary=recipe_ingredients, back_populates="recipes"
+    recipe_ingredients = relationship(
+        "RecipeIngredient",
+        back_populates="recipe",
+        cascade="all, delete-orphan",
+        order_by="RecipeIngredient.id",
     )
 
     def __repr__(self):

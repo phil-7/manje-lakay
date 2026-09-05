@@ -8,7 +8,8 @@ function renderRecipes(recipes) {
 
   listEl.innerHTML = "";
   for (const recipe of recipes) {
-    const ingredientNames = recipe.ingredients.map((i) => i.name).join(", ");
+    const ingredientText = recipe.ingredients.map(formatIngredientAmount).join(", ");
+    const servingsText = recipe.servings ? `Serves ${recipe.servings} · ` : "";
     const card = document.createElement("div");
     card.className = "recipe-card";
     card.innerHTML = `
@@ -22,7 +23,7 @@ function renderRecipes(recipes) {
           ${recipe.is_planned ? "On your plan" : "Add to Plan"}
         </button>
       </div>
-      <p class="recipe-ingredients">${ingredientNames || "No ingredients listed"}</p>
+      <p class="recipe-ingredients">${servingsText}${ingredientText || "No ingredients listed"}</p>
     `;
     card.querySelector(".toggle-plan-btn").addEventListener("click", () => togglePlan(recipe.id));
     card.querySelector(".recipe-name").addEventListener("click", () =>

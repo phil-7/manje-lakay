@@ -181,14 +181,42 @@ body {
   font-weight: 500;
 }
 
-.grocery-item-recipes {
+.grocery-item-entries {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
   font-size: 12.5px;
   color: #8a7f68;
 }
 
+.grocery-item-entries li {
+  line-height: 1.5;
+}
+
+.entry-recipe {
+  color: #a89b7d;
+}
+
+/* Toggle: hides just the "-- Recipe Name" part of each line, not the amounts */
+#grocery-results.hide-recipe-names .entry-recipe {
+  display: none;
+}
+
+.show-recipes-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #5c5340;
+  margin: 4px 0 16px;
+  cursor: pointer;
+}
+
 /* Struck-through, greyed out once checked off during shopping */
 .grocery-item.checked-off .grocery-item-name,
-.grocery-item.checked-off .grocery-item-recipes {
+.grocery-item.checked-off .grocery-item-entries {
   text-decoration: line-through;
   color: #b5ab92;
 }
@@ -423,6 +451,24 @@ textarea {
     flex-wrap: wrap;
     gap: 12px 16px;
   }
+
+  .ingredient-edit-row {
+    gap: 4px;
+  }
+
+  .ingredient-edit-row .ing-quantity {
+    flex-basis: 44px;
+  }
+
+  .ingredient-edit-row .ing-unit-select {
+    flex-basis: 62px;
+  }
+
+  .ingredient-edit-row input,
+  .ingredient-edit-row select {
+    font-size: 13px;
+    padding: 7px 6px;
+  }
 }
 
 .section-heading {
@@ -548,4 +594,93 @@ textarea {
   border-radius: 3px;
   background: #fffdf7;
   color: var(--ink);
+}
+
+/* --- structured ingredients (modal view + edit) --- */
+.modal-servings {
+  color: #8a7f68;
+  font-size: 14px;
+  margin: -8px 0 0;
+}
+
+.modal-ingredient-list {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.7;
+}
+
+.ingredient-edit-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ingredient-edit-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ingredient-edit-row .ing-quantity {
+  flex: 0 0 60px;
+  min-width: 0;
+}
+
+.ingredient-edit-row .ing-unit-select {
+  flex: 0 0 78px;
+  min-width: 0;
+}
+
+.ingredient-edit-row .ing-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ingredient-edit-row .remove-ingredient {
+  flex: 0 0 30px;
+}
+
+.ingredient-edit-row input {
+  min-width: 0;
+}
+
+.ingredient-edit-row .remove-ingredient {
+  background: none;
+  border: 1px solid var(--parchment-line);
+  border-radius: 3px;
+  color: #8a7f68;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.ingredient-edit-row .remove-ingredient:hover {
+  border-color: var(--rust);
+  color: var(--rust);
+}
+
+/* --- grocery list: mixed-units warning --- */
+.mixed-units-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #f6ecd9;
+  border: 1px solid #d8b978;
+  color: #8a6a1f;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.fraction-banner {
+  background: #f6ecd9;
+  border: 1px solid #d8b978;
+  border-radius: 3px;
+  padding: 8px 10px;
+  color: #6b5620;
+  font-size: 13px;
+  margin: -8px 0 10px;
 }

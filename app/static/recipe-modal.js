@@ -24,6 +24,75 @@
     return btn;
   }
 
+  function openOverlay(renderFn) {
+    closeModal();
+    overlayEl = document.createElement("div");
+    overlayEl.className = "modal-overlay";
+    const modal = document.createElement("div");
+    modal.className = "recipe-modal";
+    overlayEl.appendChild(modal);
+    overlayEl.addEventListener("click", (e) => {
+      if (e.target === overlayEl) closeModal();
+    });
+    document.body.appendChild(overlayEl);
+    renderFn();
+  }
+
+  // --- Ingredient rows: shared builder from ingredient-fields.js, plus
+  // the add/remove wiring both the edit form and the scrape review popup need ---
+
+  function buildIngredientRowsSection(modal, initialIngredients) {
+    const rowsContainer = document.createElement("div");
+    rowsContainer.className = "ingredient-edit-rows";
+
+    function wireRemoveButton(row) {
+      row.querySelector(".remove-ingredient").addEventListener("click", () => {
+        if (rowsContainer.children.length > 1) {
+          row.remove();
+        } else {
+          row.querySelectorAll("input").forEach((input) => (input.value = ""));
+        }
+      });
+    }
+
+    const seedIngredients = initialIngredients.length ? initialIngredients : [null];
+    for (const ing of seedIngredients) {
+      const row = makeIngredientEditRow(ing);
+      wireRemoveButton(row);
+      rowsContainer.appendChild(row);
+    }
+    modal.appendChild(rowsContainer);
+
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "add-ingredient";
+    addBtn.textContent = "+ Add ingredient";
+    addBtn.addEventListener("click", () => {
+      const row = makeIngredientEditRow(null);
+      wireRemoveButton(row);
+      rowsContainer.appendChild(row);
+    });
+    modal.appendChild(addBtn);
+
+    return rowsContainer;
+  }
+
+  function readAllIngredientRows(rowsContainer) {
+    return Array.from(rowsContainer.querySelectorAll(".ingredient-edit-row"))
+      .map(readIngredientEditRow)
+      .filter(Boolean);
+  }
+
+  function addFractionBanner(modal) {
+    const banner = document.createElement("p");
+    banner.className = "hint fraction-banner";
+    banner.textContent =
+      'Use standard fractions like "1/2" or "1 1/4", not decimals like ".5" or ".333".';
+    modal.appendChild(banner);
+  }
+
+  // --- Read-only recipe view (Planner: no edit/delete; All Recipes: with them) ---
+
   function renderView(recipe, options) {
     const modal = clearModal();
     modal.appendChild(makeCloseButton());
@@ -32,15 +101,31 @@
     h2.textContent = recipe.title;
     modal.appendChild(h2);
 
+    if (recipe.servings) {
+      const servingsP = document.createElement("p");
+      servingsP.className = "modal-servings";
+      servingsP.textContent = `Serves ${recipe.servings}`;
+      modal.appendChild(servingsP);
+    }
+
     const ingHeading = document.createElement("h3");
     ingHeading.textContent = "Ingredients";
     modal.appendChild(ingHeading);
 
-    const ingP = document.createElement("p");
-    ingP.textContent = recipe.ingredients.length
-      ? recipe.ingredients.map((i) => i.name).join(", ")
-      : "No ingredients listed";
-    modal.appendChild(ingP);
+    if (recipe.ingredients.length) {
+      const ul = document.createElement("ul");
+      ul.className = "modal-ingredient-list";
+      for (const ing of recipe.ingredients) {
+        const li = document.createElement("li");
+        li.textContent = formatIngredientAmount(ing);
+        ul.appendChild(li);
+      }
+      modal.appendChild(ul);
+    } else {
+      const p = document.createElement("p");
+      p.textContent = "No ingredients listed";
+      modal.appendChild(p);
+    }
 
     const insHeading = document.createElement("h3");
     insHeading.textContent = "Instructions";
@@ -98,13 +183,21 @@
     titleLabel.appendChild(titleInput);
     modal.appendChild(titleLabel);
 
+    const servingsLabel = document.createElement("label");
+    servingsLabel.textContent = "Servings";
+    const servingsInput = document.createElement("input");
+    servingsInput.type = "number";
+    servingsInput.min = "1";
+    servingsInput.step = "1";
+    servingsInput.value = recipe.servings ?? "";
+    servingsLabel.appendChild(servingsInput);
+    modal.appendChild(servingsLabel);
+
     const ingLabel = document.createElement("label");
-    ingLabel.textContent = "Ingredients (one per line)";
-    const ingTextarea = document.createElement("textarea");
-    ingTextarea.rows = 6;
-    ingTextarea.value = recipe.ingredients.map((i) => i.name).join("\n");
-    ingLabel.appendChild(ingTextarea);
+    ingLabel.textContent = "Ingredients";
     modal.appendChild(ingLabel);
+    addFractionBanner(modal);
+    const rowsContainer = buildIngredientRowsSection(modal, recipe.ingredients);
 
     const insLabel = document.createElement("label");
     insLabel.textContent = "Instructions";
@@ -127,16 +220,16 @@
     saveBtn.textContent = "Save";
     saveBtn.addEventListener("click", async () => {
       const title = titleInput.value;
+      const servingsRaw = servingsInput.value;
+      const servings = servingsRaw ? parseInt(servingsRaw, 10) : null;
       const instructions = insTextarea.value.trim() || null;
-      const ingredient_names = ingTextarea.value
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const ingredients = readAllIngredientRows(rowsContainer);
+
       try {
         const resp = await fetch(`/recipes/${recipe.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, instructions, ingredient_names }),
+          body: JSON.stringify({ title, instructions, servings, ingredients }),
         });
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.detail || "Something went wrong.");
@@ -159,18 +252,101 @@
     modal.appendChild(actions);
   }
 
+  // --- Scrape review popup: shown after scraping, before anything is saved ---
+
+  function renderScrapeReview(preview, options) {
+    const modal = clearModal();
+    modal.appendChild(makeCloseButton());
+
+    const h2 = document.createElement("h2");
+    h2.textContent = "Review Scraped Recipe";
+    modal.appendChild(h2);
+
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "Check what was pulled in below, fix anything that's wrong, and add anything that's missing.";
+    modal.appendChild(p);
+
+    const titleLabel = document.createElement("label");
+    titleLabel.textContent = "Title";
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.value = preview.title;
+    titleLabel.appendChild(titleInput);
+    modal.appendChild(titleLabel);
+
+    const servingsLabel = document.createElement("label");
+    servingsLabel.textContent = "Servings";
+    const servingsInput = document.createElement("input");
+    servingsInput.type = "number";
+    servingsInput.min = "1";
+    servingsInput.step = "1";
+    servingsInput.value = preview.servings ?? "";
+    servingsLabel.appendChild(servingsInput);
+    modal.appendChild(servingsLabel);
+
+    const ingLabel = document.createElement("label");
+    ingLabel.textContent = "Ingredients";
+    modal.appendChild(ingLabel);
+    addFractionBanner(modal);
+    const rowsContainer = buildIngredientRowsSection(modal, preview.ingredients);
+
+    const messageEl = document.createElement("p");
+    messageEl.className = "message";
+    modal.appendChild(messageEl);
+
+    const actions = document.createElement("div");
+    actions.className = "modal-actions";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.type = "button";
+    confirmBtn.className = "submit-btn";
+    confirmBtn.textContent = "Confirm & Save";
+    confirmBtn.addEventListener("click", async () => {
+      const title = titleInput.value;
+      const servingsRaw = servingsInput.value;
+      const servings = servingsRaw ? parseInt(servingsRaw, 10) : null;
+      const ingredients = readAllIngredientRows(rowsContainer);
+
+      try {
+        const resp = await fetch("/recipes/scrape-confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            servings,
+            source_url: preview.source_url,
+            ingredients,
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || "Something went wrong.");
+        closeModal();
+        if (options.onConfirmed) options.onConfirmed(data);
+      } catch (err) {
+        messageEl.textContent = err.message;
+        messageEl.className = "message error";
+      }
+    });
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "modal-cancel-btn";
+    cancelBtn.textContent = "Discard";
+    cancelBtn.addEventListener("click", closeModal);
+
+    actions.appendChild(confirmBtn);
+    actions.appendChild(cancelBtn);
+    modal.appendChild(actions);
+  }
+
   // options: { editable: bool, onUpdated: fn(updatedRecipe), onDeleted: fn(id) }
   window.showRecipeModal = function (recipe, options = {}) {
-    closeModal();
-    overlayEl = document.createElement("div");
-    overlayEl.className = "modal-overlay";
-    const modal = document.createElement("div");
-    modal.className = "recipe-modal";
-    overlayEl.appendChild(modal);
-    overlayEl.addEventListener("click", (e) => {
-      if (e.target === overlayEl) closeModal();
-    });
-    document.body.appendChild(overlayEl);
-    renderView(recipe, options);
+    openOverlay(() => renderView(recipe, options));
+  };
+
+  // options: { onConfirmed: fn(savedRecipe) }
+  window.showScrapePreviewModal = function (preview, options = {}) {
+    openOverlay(() => renderScrapeReview(preview, options));
   };
 })();
