@@ -1,0 +1,35 @@
+# --- Python virtual environment ---
+.venv/
+venv/
+ENV/
+
+# --- Python cache / compiled files ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- SQLite database files ---
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# --- Environment variables ---
+.env
+.env.*
+
+# --- VS Code settings ---
+.vscode/
+*.code-workspace
+
+# --- OS-specific junk ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+
+# --- Local development artifacts ---
+*.pid
+*.seed
+*.bak
