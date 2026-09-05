@@ -6,7 +6,7 @@
   <title>{% block title %}Manje Lakay{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body>
+<body class="{{ active_page }}-page">
   <div class="card">
     <nav class="top-nav">
       <a href="/" class="{{ 'current' if active_page == 'planner' else '' }}">Planner</a>

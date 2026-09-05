@@ -197,8 +197,12 @@ body {
   color: #a89b7d;
 }
 
-/* Toggle: hides just the "-- Recipe Name" part of each line, not the amounts */
+/* Toggle: hide recipe details while keeping the ingredient name visible */
 #grocery-results.hide-recipe-names .entry-recipe {
+  display: none;
+}
+
+#grocery-results.hide-recipe-names .entry-amount {
   display: none;
 }
 
@@ -675,14 +679,14 @@ textarea {
   vertical-align: middle;
 }
 
-.fraction-banner {
+.recipe-modal .fraction-banner {
   background: #f6ecd9;
   border: 1px solid #d8b978;
   border-radius: 3px;
   padding: 8px 10px;
   color: #6b5620;
   font-size: 13px;
-  margin: -8px 0 10px;
+  margin: 0 0 16px;
 }
 
 /* --- calendar page --- */
@@ -814,6 +818,18 @@ textarea {
   border-radius: 2px;
   background: #fbf6e9;
   color: #5c5340;
+}
+
+/* Give the planner room to behave like a desktop calendar. */
+@media (min-width: 769px) {
+  .planner-page .card {
+    max-width: 1180px;
+  }
+
+  .planner-page .calendar-day-col {
+    flex: 1 1 0;
+    min-width: 110px;
+  }
 }
 
 .not-scheduled-badge {

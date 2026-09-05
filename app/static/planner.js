@@ -172,6 +172,11 @@ async function loadEverything() {
       fetch("/calendar"),
       fetch("/recipes"),
     ]);
+    if (!calendarResponse.ok || !recipesResponse.ok) {
+      throw new Error(
+        `Planner request failed (${calendarResponse.status}/${recipesResponse.status})`
+      );
+    }
     const view = await calendarResponse.json();
     allRecipes = await recipesResponse.json();
 
@@ -179,7 +184,9 @@ async function loadEverything() {
     renderPlanned(allRecipes);
     renderAvailable(allRecipes);
   } catch (err) {
-    gridEl.innerHTML = `<p class="empty-state">Couldn't load your plan. Is the server running?</p>`;
+    const message = err instanceof Error ? err.message : "Unknown error";
+    rangeEl.textContent = "Planner unavailable";
+    gridEl.innerHTML = `<p class="empty-state">Couldn't load your plan (${message}).</p>`;
     plannedListEl.innerHTML = "";
     availableListEl.innerHTML = "";
   }

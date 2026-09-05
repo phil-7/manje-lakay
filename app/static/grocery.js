@@ -22,12 +22,12 @@ function renderGroceryList(items) {
       ? `<span class="mixed-units-badge" title="These use different unit types (e.g. volume vs. weight) and aren't combined automatically">Mixed units</span>`
       : "";
 
-    // Each recipe's amount gets its own line, listed vertically -- the
-    // "entry-recipe" span is what the show/hide toggle controls.
+    // Each recipe's amount gets its own line, listed vertically. The toggle
+    // controls both the amount and recipe name on each line.
     const entryLines = item.entries
       .map((entry) => {
         const amount = formatAmount(entry);
-        return `<li>${amount ? amount + " " : ""}<span class="entry-recipe">-- ${entry.recipe}</span></li>`;
+        return `<li><span class="entry-amount">${amount}</span><span class="entry-recipe">-- ${entry.recipe}</span></li>`;
       })
       .join("");
 
@@ -79,5 +79,7 @@ async function loadGroceryList() {
 showRecipesCheckbox.addEventListener("change", () => {
   resultsEl.classList.toggle("hide-recipe-names", !showRecipesCheckbox.checked);
 });
+
+resultsEl.classList.toggle("hide-recipe-names", !showRecipesCheckbox.checked);
 
 loadGroceryList();
