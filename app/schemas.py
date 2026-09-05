@@ -21,6 +21,12 @@ class GroceryListRequest(BaseModel):
     recipe_ids: list[int]
 
 
+class RecipeUpdate(BaseModel):
+    title: str
+    instructions: str | None = None
+    ingredient_names: list[str]
+
+
 # --- Response bodies (what goes OUT to the client) ---
 # These mirror the database models, but only expose what's safe/useful
 # to send back over the API.
@@ -43,6 +49,7 @@ class RecipeOut(BaseModel):
     source_url: str | None
     instructions: str | None
     created_at: datetime
+    is_planned: bool
     ingredients: list[IngredientOut]
 
 

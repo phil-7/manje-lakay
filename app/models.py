@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table
+from sqlalchemy import Boolean, Column, Integer, String, Text, DateTime, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -46,6 +46,11 @@ class Recipe(Base):
     instructions = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Whether this recipe is currently on the "recipes I plan to make" list.
+    # A simple flag, not a per-date schedule -- a recipe is either planned
+    # or it isn't.
+    is_planned = Column(Boolean, default=False, nullable=False)
 
     ingredients = relationship(
         "Ingredient", secondary=recipe_ingredients, back_populates="recipes"

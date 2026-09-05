@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Manje Lakay{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="card">
+    <nav class="top-nav">
+      <a href="/" class="{{ 'current' if active_page == 'planner' else '' }}">Planner</a>
+      <a href="/add" class="{{ 'current' if active_page == 'add' else '' }}">Add Recipe</a>
+      <a href="/grocery" class="{{ 'current' if active_page == 'grocery' else '' }}">Grocery List</a>
+      <a href="/all-recipes" class="{{ 'current' if active_page == 'all-recipes' else '' }}">All Recipes</a>
+    </nav>
+
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="/static/recipe-modal.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

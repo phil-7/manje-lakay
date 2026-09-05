@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Manje Lakay - Planner{% endblock %}
+
+{% block content %}
+  <h1>Your Plan</h1>
+  <p class="subtitle">Recipes you're planning to make. Unplan one when you're done.</p>
+
+  <div class="recipe-list" id="recipe-list">
+    <p class="empty-state">Loading...</p>
+  </div>
+
+  <h2 class="section-heading">Add from your recipes</h2>
+  <div class="recipe-list" id="available-recipe-list">
+    <p class="empty-state">Loading...</p>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/planner.js"></script>
+{% endblock %}

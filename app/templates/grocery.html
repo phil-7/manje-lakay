@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Manje Lakay - Grocery List{% endblock %}
+
+{% block content %}
+  <h1>Grocery List</h1>
+  <p class="subtitle">Built automatically from whatever's currently on your Plan.</p>
+
+  <div id="planned-summary"></div>
+
+  <div id="grocery-results">
+    <p class="empty-state">Loading...</p>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/grocery.js"></script>
+{% endblock %}

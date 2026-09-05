@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+﻿from sqlalchemy.orm import Session
 
 from app.models import Recipe, Ingredient
 from app.scraper import scrape_recipe_ingredients
@@ -29,8 +29,6 @@ def create_manual_recipe(
     if not title:
         raise ValueError("Recipe title cannot be empty.")
 
-    # Normalize and drop any blank entries (e.g. an empty text field a user
-    # left behind), then de-duplicate names within this single submission.
     cleaned_names = {name.strip().lower() for name in ingredient_names if name.strip()}
     if not cleaned_names:
         raise ValueError("Recipe must have at least one ingredient.")
@@ -77,3 +75,74 @@ def create_scraped_recipe(db: Session, url: str) -> Recipe:
     db.add(recipe)
     db.commit()
     return recipe
+
+
+def toggle_planned(db: Session, recipe_id: int) -> Recipe:
+    """
+    Flip a recipe's is_planned flag (on your plan <-> not on your plan).
+
+    Raises ValueError if no recipe with that id exists.
+    """
+    recipe = db.query(Recipe).filter_by(id=recipe_id).first()
+    if recipe is None:
+        raise ValueError(f"Recipe {recipe_id} not found")
+
+    recipe.is_planned = not recipe.is_planned
+    db.commit()
+    return recipe
+
+
+def update_recipe(
+    db: Session,
+    recipe_id: int,
+    title: str,
+    instructions: str | None,
+    ingredient_names: list[str],
+) -> Recipe:
+    """
+    Edit an existing recipe's title, instructions, and ingredients.
+
+    The ingredient list is fully REPLACED, not merged -- whatever you pass
+    in becomes the complete new list. Same validation as creating a recipe:
+    title and at least one ingredient are required.
+
+    Raises ValueError if the recipe doesn't exist, the title is empty, or
+    no ingredients are given.
+    """
+    recipe = db.query(Recipe).filter_by(id=recipe_id).first()
+    if recipe is None:
+        raise ValueError(f"Recipe {recipe_id} not found")
+
+    title = title.strip()
+    if not title:
+        raise ValueError("Recipe title cannot be empty.")
+
+    cleaned_names = {name.strip().lower() for name in ingredient_names if name.strip()}
+    if not cleaned_names:
+        raise ValueError("Recipe must have at least one ingredient.")
+
+    if instructions is not None:
+        instructions = instructions.strip() or None
+
+    recipe.title = title
+    recipe.instructions = instructions
+    recipe.ingredients = [get_or_create_ingredient(db, name) for name in cleaned_names]
+
+    db.commit()
+    return recipe
+
+
+def delete_recipe(db: Session, recipe_id: int) -> None:
+    """
+    Delete a recipe. The ingredients it used are NOT deleted -- they stay
+    in the database in case other recipes still reference them (or for
+    reuse later), since Ingredient rows are shared across recipes.
+
+    Raises ValueError if no recipe with that id exists.
+    """
+    recipe = db.query(Recipe).filter_by(id=recipe_id).first()
+    if recipe is None:
+        raise ValueError(f"Recipe {recipe_id} not found")
+
+    db.delete(recipe)
+    db.commit()

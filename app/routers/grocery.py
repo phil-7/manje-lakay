@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.routers.grocery import build_grocery_list
+from app.grocery import build_grocery_list
 from app.schemas import GroceryListItem, GroceryListRequest
 
 router = APIRouter(prefix="/grocery-list", tags=["grocery-list"])

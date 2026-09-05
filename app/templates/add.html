@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Manje Lakay - Add Recipe{% endblock %}
+
+{% block content %}
+  <h1>Manje Lakay</h1>
+  <p class="subtitle">Add a recipe by pasting a link, or enter one by hand.</p>
+
+  <div class="mode-toggle">
+    <button type="button" id="tab-scrape" class="active">From a URL</button>
+    <button type="button" id="tab-manual">Enter manually</button>
+  </div>
+
+  <form id="scrape-form" class="active">
+    <label>
+      Recipe URL
+      <input type="url" id="scrape-url" placeholder="https://example.com/some-recipe" required />
+    </label>
+    <p class="hint">Only ingredients are pulled in automatically. You'll add instructions yourself afterward.</p>
+    <button type="submit" class="submit-btn">Scrape Recipe</button>
+  </form>
+
+  <form id="manual-form">
+    <label>
+      Title
+      <input type="text" id="manual-title" required />
+    </label>
+
+    <label>
+      Ingredients
+      <div class="ingredient-rows" id="ingredient-rows">
+        <div class="ingredient-row">
+          <input type="text" class="ingredient-input" placeholder="e.g. garlic" />
+          <button type="button" class="remove-ingredient">&times;</button>
+        </div>
+      </div>
+    </label>
+    <button type="button" class="add-ingredient" id="add-ingredient">+ Add ingredient</button>
+
+    <label>
+      Instructions <span class="hint">(optional)</span>
+      <textarea id="manual-instructions" rows="5"></textarea>
+    </label>
+
+    <button type="submit" class="submit-btn">Save Recipe</button>
+  </form>
+
+  <p id="message" class="message"></p>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/add.js"></script>
+{% endblock %}

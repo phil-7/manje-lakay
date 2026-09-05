@@ -1,35 +1,14 @@
-# --- Python virtual environment ---
+# Virtual environment
 .venv/
-venv/
-ENV/
 
-# --- Python cache / compiled files ---
+# Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 
-# --- SQLite database files ---
-data/*.db
-data/*.sqlite
-data/*.sqlite3
+# Local database and backups -- personal data, not source code
+data/manje_lakay.db
+data/backups/
 
-# --- Environment variables ---
-.env
-.env.*
-
-# --- VS Code settings ---
+# Editor/OS cruft
 .vscode/
-*.code-workspace
-
-# --- OS-specific junk ---
 .DS_Store
-Thumbs.db
-
-# --- Logs ---
-*.log
-
-# --- Local development artifacts ---
-*.pid
-*.seed
-*.bak

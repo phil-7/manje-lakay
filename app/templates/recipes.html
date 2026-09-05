@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Manje Lakay - All Recipes{% endblock %}
+
+{% block content %}
+  <h1>All Recipes</h1>
+  <p class="subtitle">Everything you've saved. Add any of these to your Plan.</p>
+
+  <div class="recipe-list" id="recipe-list">
+    <p class="empty-state">Loading...</p>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/all-recipes.js"></script>
+{% endblock %}
