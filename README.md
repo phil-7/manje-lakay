@@ -12,11 +12,11 @@ Built with FastAPI, SQLAlchemy, SQLite, and server-rendered Jinja2 templates.
   - Paste a URL — pulls ingredients from the page's embedded JSON-LD (schema.org `Recipe` markup), then cleans each line down to just the core ingredient name using a local NLP model (`ingredient_parser_nlp`) — no external API calls, no cost.
   - Enter manually — title, ingredients, and instructions.
   - Instructions are **only ever typed in by hand**, never scraped, on purpose.
-- **Planner** — mark any saved recipe as "planned," and add existing recipes to your plan directly from the Planner page.
+- **Planner** — manage an editable calendar with breakfast, lunch, and dinner slots for each day. Choose a saved recipe for any slot, replace it, or clear it. Start a new 1-, 2-, or 4-week calendar when needed.
 - **All Recipes** — browse everything you've saved, with full edit and delete support.
 - **Recipe detail view** — click any recipe (Planner or All Recipes) to see its ingredients and instructions. Editing/deleting is only available from All Recipes.
-- **Grocery List** — automatically built from whatever's currently on your Plan (no manual re-selecting), with a shopping checklist so you can check off what you've already got.
-- **Mobile-friendly** — responsive layout, and reachable from other devices on your network (see below).
+- **Grocery List** — automatically built from whatever's currently on your Plan (no manual re-selecting), with a shopping checklist so you can check off what you've already got. Recipe names and quantities are hidden by default for a simpler shopping view; enable the checkbox to show them.
+- **Responsive layout** — all tabs share a wider desktop layout and adapt to phones and other smaller screens.
 - **Database backups** — a script to safely back up the SQLite database using SQLite's own backup API (safe to run while the app is live).
 
 ---
@@ -32,10 +32,12 @@ manje-lakay/
 │   ├── schemas.py         # Pydantic request/response models
 │   ├── recipes.py         # Business logic: create/update/delete/toggle-plan
 │   ├── grocery.py         # Grocery list building logic
+│   ├── calendar.py        # Calendar settings and meal scheduling logic
 │   ├── scraper.py         # URL -> JSON-LD -> cleaned ingredients pipeline
 │   ├── routers/
 │   │   ├── recipes.py     # /recipes API endpoints
 │   │   ├── grocery.py     # /grocery-list API endpoint
+│   │   ├── calendar.py     # /calendar API endpoints
 │   │   └── pages.py       # HTML page routes (/, /add, /grocery, /all-recipes)
 │   ├── templates/         # Jinja2 templates
 │   │   ├── base.html      # Shared layout (nav, head) -- other pages extend this
@@ -49,6 +51,7 @@ manje-lakay/
 │       ├── add.js
 │       ├── all-recipes.js
 │       ├── grocery.js
+│       ├── ingredient-fields.js # Shared fraction-aware ingredient inputs
 │       └── recipe-modal.js # Shared recipe detail/edit popup
 ├── scripts/
 │   └── backup_db.py       # Database backup utility
@@ -109,9 +112,9 @@ Creates a timestamped copy in `data/backups/`, keeping the 14 most recent. Autom
 
 | Page | Route | Purpose |
 |---|---|---|
-| Planner | `/` | Recipes currently on your plan, plus a way to add more from your saved recipes |
+| Planner | `/` | Editable meal calendar, planned recipes, and saved recipes available to add |
 | Add Recipe | `/add` | Add a new recipe, by URL or manually |
-| Grocery List | `/grocery` | Combined ingredient list for everything on your plan |
+| Grocery List | `/grocery` | Combined ingredient list and shopping checklist for everything on your plan |
 | All Recipes | `/all-recipes` | Every saved recipe, with edit/delete |
 
-The underlying JSON API lives at `/recipes` and `/grocery-list` (interactive docs at `/docs`).
+The underlying JSON API lives at `/recipes`, `/calendar`, and `/grocery-list` (interactive docs at `/docs`).

@@ -820,9 +820,9 @@ textarea {
   color: #5c5340;
 }
 
-/* Give the planner room to behave like a desktop calendar. */
+/* Keep every tab on the same comfortable desktop canvas. */
 @media (min-width: 769px) {
-  .planner-page .card {
+  .card {
     max-width: 1180px;
   }
 
