@@ -101,6 +101,22 @@
     h2.textContent = recipe.title;
     modal.appendChild(h2);
 
+    if (recipe.source_url) {
+      try {
+        const sourceUrl = new URL(recipe.source_url);
+        if (sourceUrl.protocol === "http:" || sourceUrl.protocol === "https:") {
+          const sourceLink = document.createElement("a");
+          sourceLink.className = "modal-source-link";
+          sourceLink.href = sourceUrl.href;
+          sourceLink.target = "_blank";
+          sourceLink.rel = "noopener noreferrer";
+          sourceLink.textContent = recipe.title;
+          sourceLink.setAttribute("aria-label", `Open ${recipe.title} source`);
+          modal.appendChild(sourceLink);
+        }
+      } catch (_error) {}
+    }
+
     if (recipe.servings) {
       const servingsP = document.createElement("p");
       servingsP.className = "modal-servings";
