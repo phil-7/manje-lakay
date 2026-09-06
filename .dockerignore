@@ -2,6 +2,10 @@
 __pycache__/
 *.pyc
 .git/
+.github/
+.gitignore
+.dockerignore
 data/manje_lakay.db
 data/backups/
 .vscode/
+*.log

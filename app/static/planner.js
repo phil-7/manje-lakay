@@ -121,7 +121,7 @@ function renderPlanned(recipes) {
   for (const recipe of planned) {
     const item = document.createElement("div");
     item.className = "recipe-item";
-    const flag = recipe.is_scheduled
+    const flag = recipe.is_staple || recipe.is_scheduled
       ? ""
       : `<span class="not-scheduled-badge" title="This is on your Plan but isn't scheduled on the calendar yet">Not on calendar</span>`;
     item.innerHTML = `

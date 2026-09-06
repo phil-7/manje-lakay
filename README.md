@@ -107,6 +107,18 @@ python scripts\backup_db.py
 ```
 Creates a timestamped copy in `data/backups/`, keeping the 14 most recent. Automate it with Windows Task Scheduler for daily backups (set "Start in" to the project root, since the script uses relative paths).
 
+### 6. Run with Docker and receive updates
+
+The Docker deployment publishes a new image to GitHub Container Registry whenever `main` changes. Watchtower checks that image every five minutes and replaces the app container when a newer image is available. The database remains in `./data`, and the container runs `alembic upgrade head` before starting the updated app.
+
+Make the GitHub Container Registry package public, then on the Docker host run:
+
+```bash
+docker compose up -d
+```
+
+Before deploying changes that include migrations, back up `./data`. For a manual update, use `docker compose pull && docker compose up -d` instead of relying on Watchtower.
+
 ---
 
 ## 🗺️ Pages
