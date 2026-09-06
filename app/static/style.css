@@ -711,10 +711,30 @@ textarea {
   margin: -8px 0 0;
 }
 
-.modal-ingredient-list {
+.modal-checklist {
   margin: 0;
-  padding-left: 20px;
-  line-height: 1.7;
+}
+
+.recipe-modal .recipe-checklist-item {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  margin: 0 0 9px !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.recipe-checklist-item input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin: 4px 0 0;
+}
+
+.recipe-checklist-item input[type="checkbox"]:checked + span {
+  color: #a89b7d;
+  text-decoration: line-through;
 }
 
 .ingredient-edit-rows {

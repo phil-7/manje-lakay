@@ -91,6 +91,21 @@
     modal.appendChild(banner);
   }
 
+  function makeChecklistItem(text, className) {
+    const label = document.createElement("label");
+    label.className = className;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    label.appendChild(checkbox);
+
+    const itemText = document.createElement("span");
+    itemText.textContent = text;
+    label.appendChild(itemText);
+
+    return label;
+  }
+
   // --- Read-only recipe view (Planner: no edit/delete; All Recipes: with them) ---
 
   function renderView(recipe, options) {
@@ -129,14 +144,14 @@
     modal.appendChild(ingHeading);
 
     if (recipe.ingredients.length) {
-      const ul = document.createElement("ul");
-      ul.className = "modal-ingredient-list";
+      const ingredientsList = document.createElement("div");
+      ingredientsList.className = "modal-checklist modal-ingredient-list";
       for (const ing of recipe.ingredients) {
-        const li = document.createElement("li");
-        li.textContent = formatIngredientAmount(ing);
-        ul.appendChild(li);
+        ingredientsList.appendChild(
+          makeChecklistItem(formatIngredientAmount(ing), "recipe-checklist-item")
+        );
       }
-      modal.appendChild(ul);
+      modal.appendChild(ingredientsList);
     } else {
       const p = document.createElement("p");
       p.textContent = "No ingredients listed";
