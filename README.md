@@ -107,17 +107,37 @@ python scripts\backup_db.py
 ```
 Creates a timestamped copy in `data/backups/`, keeping the 14 most recent. Automate it with Windows Task Scheduler for daily backups (set "Start in" to the project root, since the script uses relative paths).
 
-### 6. Run with Docker and receive updates
+### 6. Run with Docker (manual updates)
 
-The Docker deployment publishes a new image to GitHub Container Registry whenever `main` changes. Watchtower checks that image every five minutes and replaces the app container when a newer image is available. The database remains in `./data`, and the container runs `alembic upgrade head` before starting the updated app.
+This repository includes a Docker Compose setup for running the app. The compose stack does not perform automatic image updates — updates are applied manually by the operator. The database remains in `./data`, and the container runs `alembic upgrade head` before starting the app.
 
-Make the GitHub Container Registry package public, then on the Docker host run:
+Start the stack:
 
 ```bash
 docker compose up -d
 ```
 
-Before deploying changes that include migrations, back up `./data`. For a manual update, use `docker compose pull && docker compose up -d` instead of relying on Watchtower.
+Manual update workflow (recommended):
+
+```bash
+# Backup the database first
+cp -v ./data/manje_lakay.db ./data/manje_lakay.db.bak.$(date +%Y%m%d%H%M)
+
+# Pull the latest image published to the registry, then recreate containers
+docker compose pull
+docker compose up -d
+```
+
+If you build and deploy from local source instead of pulling from the registry, build with:
+
+```bash
+docker build -t ghcr.io/phil-7/manje-lakay:latest .
+docker compose up -d
+```
+
+Notes:
+- Always back up `./data` before applying updates that include migrations. `alembic upgrade head` runs at container start.
+- If you later decide to re-enable automatic updates, add a Watchtower (or similar) service and a label on the app service; this repo previously used Watchtower but it is not required.
 
 ---
 

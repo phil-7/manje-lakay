@@ -11,8 +11,6 @@ services:
       # survive every update.
       - ./data:/app/data
     restart: unless-stopped
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
 
   watchtower:
     image: containrrr/watchtower:latest
