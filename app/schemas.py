@@ -24,6 +24,7 @@ class ManualRecipeCreate(BaseModel):
 
 class ScrapedRecipeCreate(BaseModel):
     url: str
+    instructions: str | None = None
 
 
 class GroceryListRequest(BaseModel):
@@ -34,6 +35,7 @@ class ScrapedRecipePreview(BaseModel):
     """A scraped recipe that hasn't been saved yet -- nothing in the
     database is touched until the user confirms it via ScrapedRecipeConfirm."""
     title: str
+    instructions: str | None = None
     servings: int | None
     source_url: str
     ingredients: list[IngredientEntry]

@@ -329,6 +329,7 @@
     insLabel.textContent = "Instructions (optional)";
     const insTextarea = document.createElement("textarea");
     insTextarea.rows = 6;
+    insTextarea.value = preview.instructions || "";
     insLabel.appendChild(insTextarea);
     modal.appendChild(insLabel);
 

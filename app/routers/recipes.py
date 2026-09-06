@@ -46,7 +46,7 @@ def preview_scrape(payload: ScrapedRecipeCreate, db: Session = Depends(get_db)):
     confirms (POST /recipes/scrape-confirm) or discards it.
     """
     try:
-        return preview_scraped_recipe(payload.url)
+        return preview_scraped_recipe(payload.url, payload.instructions)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

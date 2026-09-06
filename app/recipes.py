@@ -79,7 +79,7 @@ def create_manual_recipe(
     return recipe
 
 
-def preview_scraped_recipe(url: str) -> dict:
+def preview_scraped_recipe(url: str, instructions: str | None = None) -> dict:
     """
     Scrape a URL and return a DRAFT for the user to review/edit before
     anything is saved. Deliberately touches the database not at all --
@@ -98,6 +98,7 @@ def preview_scraped_recipe(url: str) -> dict:
 
     return {
         "title": title.strip(),
+        "instructions": instructions.strip() if instructions and instructions.strip() else None,
         "servings": servings,
         "source_url": url,
         "ingredients": [

@@ -62,6 +62,7 @@ resetIngredientRows(); // start with one blank row
 scrapeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const url = document.getElementById("scrape-url").value.trim();
+  const instructions = document.getElementById("scrape-instructions").value.trim();
   const submitBtn = scrapeForm.querySelector(".submit-btn");
 
   submitBtn.disabled = true;
@@ -70,7 +71,7 @@ scrapeForm.addEventListener("submit", async (event) => {
     const response = await fetch(`${API_BASE}/recipes/scrape-preview`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, instructions: instructions || null }),
     });
     const preview = await response.json();
     if (!response.ok) {
