@@ -12,3 +12,5 @@ data/backups/
 # Editor/OS cruft
 .vscode/
 .DS_Store
+
+app/__pycache__/*
