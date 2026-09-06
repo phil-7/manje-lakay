@@ -58,6 +58,7 @@ def confirm_scrape(payload: ScrapedRecipeConfirm, db: Session = Depends(get_db))
         recipe = create_recipe_from_confirmed_scrape(
             db,
             payload.title,
+            payload.instructions,
             payload.servings,
             payload.source_url,
             [entry.model_dump() for entry in payload.ingredients],
@@ -104,6 +105,7 @@ def edit_recipe(recipe_id: int, payload: RecipeUpdate, db: Session = Depends(get
             db,
             recipe_id,
             payload.title,
+            payload.source_url,
             payload.instructions,
             payload.servings,
             [entry.model_dump() for entry in payload.ingredients],

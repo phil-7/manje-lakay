@@ -183,6 +183,14 @@
     titleLabel.appendChild(titleInput);
     modal.appendChild(titleLabel);
 
+    const urlLabel = document.createElement("label");
+    urlLabel.textContent = "Recipe URL (optional)";
+    const urlInput = document.createElement("input");
+    urlInput.type = "url";
+    urlInput.value = recipe.source_url || "";
+    urlLabel.appendChild(urlInput);
+    modal.appendChild(urlLabel);
+
     const servingsLabel = document.createElement("label");
     servingsLabel.textContent = "Servings";
     const servingsInput = document.createElement("input");
@@ -220,6 +228,7 @@
     saveBtn.textContent = "Save";
     saveBtn.addEventListener("click", async () => {
       const title = titleInput.value;
+      const source_url = urlInput.value.trim() || null;
       const servingsRaw = servingsInput.value;
       const servings = servingsRaw ? parseInt(servingsRaw, 10) : null;
       const instructions = insTextarea.value.trim() || null;
@@ -229,7 +238,7 @@
         const resp = await fetch(`/recipes/${recipe.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, instructions, servings, ingredients }),
+          body: JSON.stringify({ title, source_url, instructions, servings, ingredients }),
         });
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.detail || "Something went wrong.");
@@ -285,11 +294,27 @@
     servingsLabel.appendChild(servingsInput);
     modal.appendChild(servingsLabel);
 
+    const urlLabel = document.createElement("label");
+    urlLabel.textContent = "Recipe URL";
+    const urlInput = document.createElement("input");
+    urlInput.type = "url";
+    urlInput.required = true;
+    urlInput.value = preview.source_url || "";
+    urlLabel.appendChild(urlInput);
+    modal.appendChild(urlLabel);
+
     const ingLabel = document.createElement("label");
     ingLabel.textContent = "Ingredients";
     modal.appendChild(ingLabel);
     addFractionBanner(modal);
     const rowsContainer = buildIngredientRowsSection(modal, preview.ingredients);
+
+    const insLabel = document.createElement("label");
+    insLabel.textContent = "Instructions (optional)";
+    const insTextarea = document.createElement("textarea");
+    insTextarea.rows = 6;
+    insLabel.appendChild(insTextarea);
+    modal.appendChild(insLabel);
 
     const messageEl = document.createElement("p");
     messageEl.className = "message";
@@ -304,8 +329,10 @@
     confirmBtn.textContent = "Confirm & Save";
     confirmBtn.addEventListener("click", async () => {
       const title = titleInput.value;
+      const source_url = urlInput.value.trim() || null;
       const servingsRaw = servingsInput.value;
       const servings = servingsRaw ? parseInt(servingsRaw, 10) : null;
+      const instructions = insTextarea.value.trim() || null;
       const ingredients = readAllIngredientRows(rowsContainer);
 
       try {
@@ -314,8 +341,9 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title,
+            instructions,
             servings,
-            source_url: preview.source_url,
+            source_url,
             ingredients,
           }),
         });

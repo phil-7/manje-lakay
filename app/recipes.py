@@ -110,8 +110,9 @@ def preview_scraped_recipe(url: str) -> dict:
 def create_recipe_from_confirmed_scrape(
     db: Session,
     title: str,
+    instructions: str | None,
     servings: int | None,
-    source_url: str,
+    source_url: str | None,
     ingredients: list[dict],
 ) -> Recipe:
     """
@@ -120,21 +121,28 @@ def create_recipe_from_confirmed_scrape(
     re-parsing here, since the user may have fixed quantities/units
     or added ingredients by hand in the review step.
 
-    IMPORTANT: instructions are always None here -- never scraped, and
-    not editable at this step either. Same legal reason as everywhere
-    else in this app.
-
     Raises ValueError if the title is empty or no ingredients remain.
     """
     title = title.strip()
     if not title:
         raise ValueError("Recipe title cannot be empty.")
 
+    if instructions is not None:
+        instructions = instructions.strip() or None
+
+    if source_url is not None:
+        source_url = source_url.strip() or None
+
     recipe_ingredients = _build_recipe_ingredients_from_entries(db, ingredients)
     if not recipe_ingredients:
         raise ValueError("Recipe must have at least one ingredient.")
 
-    recipe = Recipe(title=title, source_url=source_url, instructions=None, servings=servings)
+    recipe = Recipe(
+        title=title,
+        source_url=source_url,
+        instructions=instructions,
+        servings=servings,
+    )
     recipe.recipe_ingredients = recipe_ingredients
 
     db.add(recipe)
@@ -161,13 +169,14 @@ def update_recipe(
     db: Session,
     recipe_id: int,
     title: str,
+    source_url: str | None,
     instructions: str | None,
     servings: int | None,
     ingredients: list[dict],
 ) -> Recipe:
     """
-    Edit an existing recipe's title, instructions, servings, and
-    ingredients. Unlike creation, `ingredients` here is already
+    Edit an existing recipe's title, source URL, instructions, servings,
+    and ingredients. Unlike creation, `ingredients` here is already
     structured (list of {"name", "quantity", "unit"} dicts) -- this is
     for the edit form, where the user adjusts fields directly rather
     than typing a free-text line to be re-parsed.
@@ -193,7 +202,11 @@ def update_recipe(
     if instructions is not None:
         instructions = instructions.strip() or None
 
+    if source_url is not None:
+        source_url = source_url.strip() or None
+
     recipe.title = title
+    recipe.source_url = source_url
     recipe.instructions = instructions
     recipe.servings = servings
     recipe.recipe_ingredients = recipe_ingredients

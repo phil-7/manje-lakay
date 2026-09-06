@@ -42,6 +42,7 @@ class ScrapedRecipePreview(BaseModel):
 class ScrapedRecipeConfirm(BaseModel):
     """What the user actually approved after reviewing/editing the preview."""
     title: str
+    instructions: str | None = None
     servings: int | None = None
     source_url: str
     ingredients: list[IngredientEntry]
@@ -49,6 +50,7 @@ class ScrapedRecipeConfirm(BaseModel):
 
 class RecipeUpdate(BaseModel):
     title: str
+    source_url: str | None = None
     instructions: str | None = None
     servings: int | None = None
     ingredients: list[IngredientEntry]
