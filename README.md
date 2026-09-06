@@ -109,35 +109,72 @@ Creates a timestamped copy in `data/backups/`, keeping the 14 most recent. Autom
 
 ### 6. Run with Docker (manual updates)
 
-This repository includes a Docker Compose setup for running the app. The compose stack does not perform automatic image updates — updates are applied manually by the operator. The database remains in `./data`, and the container runs `alembic upgrade head` before starting the app.
+This repository includes a Docker Compose setup for running the app. Automatic image updates are disabled by default in this branch — updates are applied manually by the operator. The SQLite database file is stored in `./data` and is preserved across container restarts and replacements.
 
-Start the stack:
+Follow these step-by-step instructions to perform a safe manual update:
+
+1) Ensure Docker is running on the host and you are in the project root:
 
 ```bash
-docker compose up -d
+open -a Docker
+cd /Users/philippe/Python_VS_Code/manje-lakay
+while ! docker info >/dev/null 2>&1; do sleep 1; done
 ```
 
-Manual update workflow (recommended):
+2) Back up the database (important if the update includes migrations):
 
 ```bash
-# Backup the database first
-cp -v ./data/manje_lakay.db ./data/manje_lakay.db.bak.$(date +%Y%m%d%H%M)
+# create a timestamped copy of the DB
+mkdir -p ./data/backups
+cp -v ./data/manje_lakay.db ./data/backups/manje_lakay.db.bak.$(date +%Y%m%d%H%M)
+```
 
-# Pull the latest image published to the registry, then recreate containers
+3) Option A — Update by pulling a published image from the registry (recommended if you publish images):
+
+```bash
+# Pull the latest image declared in docker-compose.yml
 docker compose pull
+
+# Recreate containers with the newly-pulled image
 docker compose up -d
 ```
 
-If you build and deploy from local source instead of pulling from the registry, build with:
+4) Option B — Build and deploy a local image (useful for local testing or if you don't publish to a registry):
 
 ```bash
+# Build image and tag it with the same repository/tag used by compose
 docker build -t ghcr.io/phil-7/manje-lakay:latest .
+
+# Recreate containers using the locally-built image
 docker compose up -d
 ```
 
-Notes:
-- Always back up `./data` before applying updates that include migrations. `alembic upgrade head` runs at container start.
-- If you later decide to re-enable automatic updates, add a Watchtower (or similar) service and a label on the app service; this repo previously used Watchtower but it is not required.
+5) Verify the update and app health:
+
+```bash
+docker ps --filter "name=manje-lakay"
+docker logs -f manje-lakay
+# in a browser: http://localhost:8000/
+```
+
+6) Rollback (if something goes wrong):
+
+```bash
+# Stop the app
+docker compose down
+
+# Restore DB backup (replace current DB)
+cp -v ./data/backups/manje_lakay.db.bak.<TIMESTAMP> ./data/manje_lakay.db
+
+# Start the previous containers (if you kept previous image tag)
+docker compose up -d
+```
+
+Additional notes and tips:
+- `alembic upgrade head` runs automatically at container start; backing up `./data/manje_lakay.db` before updates that change the schema is strongly recommended.
+- If you want to keep images public so users can auto-update without authentication, publish to GitHub Container Registry as a public package and push multi-arch manifests (both `linux/amd64` and `linux/arm64`).
+- If you later reintroduce an auto-update service (Watchtower), make sure remote images include multi-arch manifests so Apple Silicon hosts can pull the correct image for their architecture.
+- For repeated deployments, consider adding a CI workflow (GitHub Actions) to build and push multi-arch images automatically on `main`.
 
 ---
 
