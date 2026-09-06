@@ -1,13 +1,18 @@
-﻿from sqlalchemy.orm import Session
+﻿from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from app.models import Ingredient, Recipe, RecipeIngredient
 from app.scraper import scrape_recipe_ingredients
 
 
+def _title_case(value: str) -> str:
+    return " ".join(value.strip().split()).title()
+
+
 def get_or_create_ingredient(db: Session, name: str) -> Ingredient:
-    """Reuse an existing ingredient row if one already has this (normalized) name."""
-    name = name.strip().lower()
-    existing = db.query(Ingredient).filter_by(name=name).first()
+    """Reuse an ingredient case-insensitively while keeping title case for display."""
+    name = _title_case(name)
+    existing = db.query(Ingredient).filter(func.lower(Ingredient.name) == name.lower()).first()
     if existing:
         return existing
     return Ingredient(name=name)
@@ -25,7 +30,7 @@ def _build_recipe_ingredients_from_entries(
     seen_names = set()
     result = []
     for entry in entries:
-        name = (entry.get("name") or "").strip().lower()
+        name = _title_case(entry.get("name") or "")
         if not name or name in seen_names:
             continue
         seen_names.add(name)
@@ -55,7 +60,7 @@ def create_manual_recipe(
     Raises ValueError if the title is empty or no ingredients are given --
     we don't allow saving an empty/placeholder recipe.
     """
-    title = title.strip()
+    title = _title_case(title)
     if not title:
         raise ValueError("Recipe title cannot be empty.")
 
@@ -97,7 +102,7 @@ def preview_scraped_recipe(url: str, instructions: str | None = None) -> dict:
         raise ValueError(f"Could not find any usable ingredients at {url}")
 
     return {
-        "title": title.strip(),
+        "title": _title_case(title),
         "instructions": instructions.strip() if instructions and instructions.strip() else None,
         "servings": servings,
         "source_url": url,
@@ -124,7 +129,7 @@ def create_recipe_from_confirmed_scrape(
 
     Raises ValueError if the title is empty or no ingredients remain.
     """
-    title = title.strip()
+    title = _title_case(title)
     if not title:
         raise ValueError("Recipe title cannot be empty.")
 
@@ -192,7 +197,7 @@ def update_recipe(
     if recipe is None:
         raise ValueError(f"Recipe {recipe_id} not found")
 
-    title = title.strip()
+    title = "Staples" if recipe.is_staple else _title_case(title)
     if not title:
         raise ValueError("Recipe title cannot be empty.")
 
@@ -228,6 +233,9 @@ def delete_recipe(db: Session, recipe_id: int) -> None:
     recipe = db.query(Recipe).filter_by(id=recipe_id).first()
     if recipe is None:
         raise ValueError(f"Recipe {recipe_id} not found")
+
+    if recipe.is_staple:
+        raise ValueError("The Staples recipe cannot be deleted.")
 
     db.delete(recipe)
     db.commit()

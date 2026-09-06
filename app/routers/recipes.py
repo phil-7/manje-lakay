@@ -121,4 +121,5 @@ def remove_recipe(recipe_id: int, db: Session = Depends(get_db)):
     try:
         delete_recipe(db, recipe_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        status = 404 if "not found" in str(e) else 400
+        raise HTTPException(status_code=status, detail=str(e))

@@ -9,6 +9,7 @@ const tabManual = document.getElementById("tab-manual");
 const messageEl = document.getElementById("message");
 const ingredientRows = document.getElementById("ingredient-rows");
 const addIngredientBtn = document.getElementById("add-ingredient");
+enableTitleCase(document.getElementById("manual-title"));
 
 // --- Tab switching ---
 function showTab(tab) {
@@ -62,7 +63,6 @@ resetIngredientRows(); // start with one blank row
 scrapeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const url = document.getElementById("scrape-url").value.trim();
-  const instructions = document.getElementById("scrape-instructions").value.trim();
   const submitBtn = scrapeForm.querySelector(".submit-btn");
 
   submitBtn.disabled = true;
@@ -71,7 +71,7 @@ scrapeForm.addEventListener("submit", async (event) => {
     const response = await fetch(`${API_BASE}/recipes/scrape-preview`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, instructions: instructions || null }),
+      body: JSON.stringify({ url }),
     });
     const preview = await response.json();
     if (!response.ok) {

@@ -21,8 +21,8 @@ class Ingredient(Base):
     __tablename__ = "ingredients"
 
     id = Column(Integer, primary_key=True, index=True)
-    # Normalized (lowercased/trimmed) name, so "Garlic" and "garlic"
-    # from two different recipes collapse into one row.
+    # Canonical display name, so "Garlic" and "garlic" from two different
+    # recipes collapse into one row while ingredients remain readable.
     name = Column(String, unique=True, nullable=False, index=True)
 
     def __repr__(self):
@@ -82,6 +82,10 @@ class Recipe(Base):
     # A simple flag, not a per-date schedule -- a recipe is either planned
     # or it isn't.
     is_planned = Column(Boolean, default=False, nullable=False)
+
+    # Staples always appear first in All Recipes but are not automatically
+    # added to the meal plan.
+    is_staple = Column(Boolean, default=False, nullable=False)
 
     recipe_ingredients = relationship(
         "RecipeIngredient",

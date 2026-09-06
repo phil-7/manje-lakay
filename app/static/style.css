@@ -119,6 +119,23 @@ body {
   gap: 10px;
 }
 
+.recipe-card-title,
+.recipe-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recipe-card-title {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.recipe-card-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .recipe-card .recipe-name {
   font-weight: 500;
 }
@@ -149,6 +166,34 @@ body {
   background: #eaf0e6;
   border-color: var(--herb);
   color: var(--herb-dark);
+}
+
+.staple-btn,
+.staple-badge {
+  font-size: 12px;
+}
+
+.staple-btn {
+  background: none;
+  border: 1px solid var(--parchment-line);
+  border-radius: 3px;
+  color: #8a7f68;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.staple-btn:hover,
+.staple-btn.is-staple {
+  border-color: var(--rust);
+  color: var(--rust-dark);
+}
+
+.staple-badge {
+  color: var(--rust-dark);
+  border: 1px solid #d8b978;
+  border-radius: 10px;
+  padding: 2px 7px;
+  white-space: nowrap;
 }
 
 /* --- grocery list page --- */
@@ -238,6 +283,32 @@ h1 {
   font-size: 14px;
   line-height: 1.5;
   max-width: 38ch;
+}
+
+.recipe-controls {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto 180px;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 28px;
+}
+
+.recipe-controls label {
+  color: #5c5340;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.recipe-controls input,
+.recipe-controls select {
+  min-width: 0;
+  font-family: "Work Sans", sans-serif;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--parchment-line);
+  border-radius: 3px;
+  background: #fffdf7;
+  color: var(--ink);
 }
 
 /* --- mode toggle, styled like a divider tab on a recipe box --- */
@@ -454,6 +525,23 @@ textarea {
   .top-nav {
     flex-wrap: wrap;
     gap: 12px 16px;
+  }
+
+  .recipe-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-controls label {
+    margin-top: 4px;
+  }
+
+  .recipe-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .recipe-card-actions {
+    justify-content: flex-start;
   }
 
   .ingredient-edit-row {

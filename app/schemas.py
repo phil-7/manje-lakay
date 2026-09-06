@@ -85,6 +85,7 @@ class RecipeOut(BaseModel):
     servings: int | None
     created_at: datetime
     is_planned: bool
+    is_staple: bool
     is_scheduled: bool
     ingredients: list[RecipeIngredientOut]
 
@@ -98,6 +99,7 @@ class RecipeOut(BaseModel):
             servings=recipe.servings,
             created_at=recipe.created_at,
             is_planned=recipe.is_planned,
+            is_staple=recipe.is_staple,
             is_scheduled=bool(recipe.calendar_entries),
             ingredients=[
                 RecipeIngredientOut.from_recipe_ingredient(ri)

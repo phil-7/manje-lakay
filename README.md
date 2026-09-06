@@ -14,6 +14,7 @@ Built with FastAPI, SQLAlchemy, SQLite, and server-rendered Jinja2 templates.
   - Instructions are **only ever typed in by hand**, never scraped, on purpose.
 - **Planner** — manage an editable calendar with breakfast, lunch, and dinner slots for each day. Choose a saved recipe for any slot, replace it, or clear it. Start a new 1-, 2-, or 4-week calendar when needed.
 - **All Recipes** — browse everything you've saved, with full edit and delete support.
+- **Recipe search and sorting** — search by title or ingredient as you type, then sort by alphabetical order, ingredient count, or date added. Mark recipes as **staples** to keep them pinned at the top without automatically adding them to the Plan.
 - **Recipe detail view** — click any recipe (Planner or All Recipes) to see its ingredients and instructions. Editing/deleting is only available from All Recipes.
 - **Grocery List** — automatically built from whatever's currently on your Plan (no manual re-selecting), with a shopping checklist so you can check off what you've already got. Recipe names and quantities are hidden by default for a simpler shopping view; enable the checkbox to show them.
 - **Responsive layout** — all tabs share a wider desktop layout and adapt to phones and other smaller screens.

@@ -121,8 +121,21 @@ function makeIngredientEditRow(ing) {
     row.querySelector(".ing-unit-select").value = "";
   }
   row.querySelector(".ing-name").value = ing?.name ?? "";
+  enableTitleCase(row.querySelector(".ing-name"));
 
   return row;
+}
+
+function titleCase(value) {
+  return value.toLowerCase().replace(/(^|\s)(\S)/g, (match, space, letter) => space + letter.toUpperCase());
+}
+
+function enableTitleCase(input) {
+  input.addEventListener("input", () => {
+    const start = input.selectionStart;
+    input.value = titleCase(input.value);
+    input.setSelectionRange(start, start);
+  });
 }
 
 // Reads one row back out as {name, quantity, unit}, or null if it's blank.

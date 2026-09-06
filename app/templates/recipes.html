@@ -6,6 +6,17 @@
   <h1>All Recipes</h1>
   <p class="subtitle">Everything you've saved. Add any of these to your Plan.</p>
 
+  <div class="recipe-controls">
+    <label class="recipe-search-label" for="recipe-search">Search recipes</label>
+    <input type="search" id="recipe-search" placeholder="Search by title or ingredient" autocomplete="off" />
+    <label class="recipe-sort-label" for="recipe-sort">Sort by</label>
+    <select id="recipe-sort">
+      <option value="alphabetical">Alphabetical</option>
+      <option value="ingredients">Number of ingredients</option>
+      <option value="date">Date added</option>
+    </select>
+  </div>
+
   <div class="recipe-list" id="recipe-list">
     <p class="empty-state">Loading...</p>
   </div>

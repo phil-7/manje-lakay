@@ -196,6 +196,7 @@
     const titleInput = document.createElement("input");
     titleInput.type = "text";
     titleInput.value = recipe.title;
+    enableTitleCase(titleInput);
     titleLabel.appendChild(titleInput);
     modal.appendChild(titleLabel);
 
@@ -297,6 +298,7 @@
     const titleInput = document.createElement("input");
     titleInput.type = "text";
     titleInput.value = preview.title;
+    enableTitleCase(titleInput);
     titleLabel.appendChild(titleInput);
     modal.appendChild(titleLabel);
 
