@@ -6,6 +6,8 @@ const availableListEl = document.getElementById("available-recipe-list");
 
 const MEAL_SLOTS = ["breakfast", "lunch", "dinner"];
 const SLOT_LABELS = { breakfast: "B", lunch: "L", dinner: "D" };
+const SHOPPING_CHECKED_KEY = "manje-lakay-shopping-checked";
+const SHOPPING_RESET_KEY = "manje-lakay-shopping-reset";
 
 let allRecipes = [];
 
@@ -17,6 +19,8 @@ function formatDateHeading(dateStr) {
 // --- Calendar grid ---
 
 function renderGrid(view) {
+  const previousScrollLeft = Array.from(gridEl.querySelectorAll(".calendar-week-row"))
+    .map((row) => row.scrollLeft);
   rangeEl.textContent = `${formatDateHeading(view.start_date)} - ${formatDateHeading(view.end_date)} (${view.length_weeks} week${view.length_weeks > 1 ? "s" : ""})`;
 
   gridEl.innerHTML = "";
@@ -62,6 +66,10 @@ function renderGrid(view) {
     }
     gridEl.appendChild(weekRow);
   }
+
+  Array.from(gridEl.querySelectorAll(".calendar-week-row")).forEach((row, index) => {
+    row.scrollLeft = previousScrollLeft[index] || 0;
+  });
 }
 
 async function handleSlotChange(dateStr, slot, newRecipeId, existingEntryId) {
@@ -100,6 +108,8 @@ lengthButtons.forEach((btn) => {
       body: JSON.stringify({ length_weeks: weeks }),
     });
     if (resp.ok) {
+      localStorage.removeItem(SHOPPING_CHECKED_KEY);
+      localStorage.setItem(SHOPPING_RESET_KEY, String(Date.now()));
       loadEverything();
     } else {
       const data = await resp.json();

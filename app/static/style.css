@@ -263,6 +263,22 @@ body {
   cursor: pointer;
 }
 
+.reset-checklist-btn {
+  background: none;
+  border: 1px solid var(--parchment-line);
+  border-radius: 3px;
+  color: #8a7f68;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  margin: 4px 0 16px;
+}
+
+.reset-checklist-btn:hover {
+  border-color: var(--rust);
+  color: var(--rust-dark);
+}
+
 /* Struck-through, greyed out once checked off during shopping */
 .grocery-item.checked-off .grocery-item-name,
 .grocery-item.checked-off .grocery-item-entries {
