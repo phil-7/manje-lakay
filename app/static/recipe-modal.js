@@ -195,6 +195,7 @@
     titleLabel.textContent = "Title";
     const titleInput = document.createElement("input");
     titleInput.type = "text";
+    titleInput.setAttribute("autocapitalize", "words");
     titleInput.value = recipe.title;
     enableTitleCase(titleInput);
     titleLabel.appendChild(titleInput);
@@ -214,7 +215,7 @@
     servingsInput.type = "number";
     servingsInput.min = "1";
     servingsInput.step = "1";
-    servingsInput.value = recipe.servings ?? "";
+    servingsInput.value = recipe.servings != null ? recipe.servings : "";
     servingsLabel.appendChild(servingsInput);
     modal.appendChild(servingsLabel);
 
@@ -297,6 +298,7 @@
     titleLabel.textContent = "Title";
     const titleInput = document.createElement("input");
     titleInput.type = "text";
+    titleInput.setAttribute("autocapitalize", "words");
     titleInput.value = preview.title;
     enableTitleCase(titleInput);
     titleLabel.appendChild(titleInput);
@@ -308,7 +310,7 @@
     servingsInput.type = "number";
     servingsInput.min = "1";
     servingsInput.step = "1";
-    servingsInput.value = preview.servings ?? "";
+    servingsInput.value = preview.servings != null ? preview.servings : "";
     servingsLabel.appendChild(servingsInput);
     modal.appendChild(servingsLabel);
 

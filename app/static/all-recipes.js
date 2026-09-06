@@ -10,18 +10,26 @@ function formatIngredientAmount(ingredient) {
 }
 
 function sortRecipes(recipes) {
-  return [...recipes].sort((first, second) => {
-    if (first.is_staple !== second.is_staple) return first.is_staple ? -1 : 1;
+  const compareRecipes = (first, second) => {
     if (sortEl.value === "ingredients") {
       return first.ingredients.length - second.ingredients.length ||
         first.title.localeCompare(second.title);
     }
-    if (sortEl.value === "date") {
+    if (sortEl.value === "earliest") {
+      return new Date(first.created_at) - new Date(second.created_at) ||
+        first.title.localeCompare(second.title);
+    }
+    if (sortEl.value === "latest") {
       return new Date(second.created_at) - new Date(first.created_at) ||
         first.title.localeCompare(second.title);
     }
-    return first.title.localeCompare(second.title);
-  });
+    const alphabetical = first.title.localeCompare(second.title);
+    return sortEl.value === "z-to-a" ? -alphabetical : alphabetical;
+  };
+
+  const staples = recipes.filter((recipe) => recipe.is_staple);
+  const regularRecipes = recipes.filter((recipe) => !recipe.is_staple);
+  return [...staples, ...regularRecipes.sort(compareRecipes)];
 }
 
 function filteredRecipes() {
@@ -88,7 +96,12 @@ async function togglePlan(id) {
   loadRecipes();
 }
 
-searchEl.addEventListener("input", () => renderRecipes(filteredRecipes()));
+function updateRecipeResults() {
+  renderRecipes(filteredRecipes());
+}
+
+searchEl.addEventListener("input", updateRecipeResults);
+searchEl.addEventListener("search", updateRecipeResults);
 sortEl.addEventListener("change", () => renderRecipes(filteredRecipes()));
 
 loadRecipes();

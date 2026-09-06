@@ -78,6 +78,7 @@ def list_recipes(planned: bool | None = None, db: Session = Depends(get_db)):
     query = db.query(Recipe)
     if planned is not None:
         query = query.filter(Recipe.is_planned == planned)
+    query = query.order_by(Recipe.is_staple.desc(), Recipe.title.asc())
     return [RecipeOut.from_recipe(r) for r in query.all()]
 
 

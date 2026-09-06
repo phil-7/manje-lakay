@@ -98,7 +98,7 @@ function makeIngredientEditRow(ing) {
   row.className = "ingredient-edit-row";
 
   const knownValues = UNIT_OPTIONS.map((o) => o.value);
-  const rawUnit = ing?.unit ?? "";
+  const rawUnit = ing && ing.unit != null ? ing.unit : "";
   const isKnownUnit = knownValues.includes(rawUnit);
 
   const optionsHtml = UNIT_OPTIONS.map(
@@ -108,19 +108,19 @@ function makeIngredientEditRow(ing) {
   row.innerHTML = `
     <input type="text" class="ing-quantity" placeholder="1/2" />
     <select class="ing-unit-select">${optionsHtml}</select>
-    <input type="text" class="ing-name" placeholder="Ingredient" />
+    <input type="text" class="ing-name" placeholder="Ingredient" autocapitalize="words" />
     <button type="button" class="remove-ingredient">&times;</button>
   `;
 
   if (isKnownUnit) {
     row.querySelector(".ing-quantity").value =
-      ing?.quantity != null ? formatAsFraction(ing.quantity) : "";
+      ing && ing.quantity != null ? formatAsFraction(ing.quantity) : "";
     row.querySelector(".ing-unit-select").value = rawUnit;
   } else {
     row.querySelector(".ing-quantity").value = "";
     row.querySelector(".ing-unit-select").value = "";
   }
-  row.querySelector(".ing-name").value = ing?.name ?? "";
+  row.querySelector(".ing-name").value = ing && ing.name != null ? ing.name : "";
   enableTitleCase(row.querySelector(".ing-name"));
 
   return row;
