@@ -4,12 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.database import Base, engine
 from app.routers import calendar, grocery, pages, recipes
 
-# Creates any tables that don't exist yet. Safe to call every startup --
-# it does nothing to tables that are already there.
-Base.metadata.create_all(bind=engine)
+# Schema creation/updates are handled by Alembic migrations now (see
+# alembic/), not by SQLAlchemy's create_all(). Run `alembic upgrade head`
+# before starting the app -- on a brand new database this creates every
+# table from scratch; on an existing one it applies just what changed.
 
 app = FastAPI(title="Manje Lakay")
 
