@@ -1,0 +1,13 @@
+services:
+  manje-lakay:
+    build: .
+    container_name: manje-lakay
+    ports:
+      - "8000:8000"
+    volumes:
+      # Keeps the database file on the HOST machine, outside the
+      # container. This is what makes updates safe: rebuilding or
+      # replacing the container never touches this folder, so recipes
+      # survive every update.
+      - ./data:/app/data
+    restart: unless-stopped
