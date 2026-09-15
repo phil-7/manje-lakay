@@ -1,6 +1,6 @@
 services:
   manje-lakay:
-    image: ghcr.io/phil-7/manje-lakay:latest
+    build: .
     container_name: manje-lakay
     ports:
       - "8000:8000"
