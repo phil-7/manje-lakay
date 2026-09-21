@@ -9,16 +9,26 @@ Built with FastAPI, SQLAlchemy, SQLite, and server-rendered Jinja2 templates.
 ## 🚀 Features
 
 - **Add recipes two ways:**
-  - Paste a URL — pulls ingredients from the page's embedded JSON-LD (schema.org `Recipe` markup), then cleans each line down to just the core ingredient name using a local NLP model (`ingredient_parser_nlp`) — no external API calls, no cost.
+  - Paste a URL — fetches the page, finds its embedded JSON-LD (schema.org `Recipe` markup), extracts the title, ingredients, and best-effort serving count, then cleans each ingredient line using a local NLP model (`ingredient_parser_nlp`) — no external API calls, no cost.
+  - Scraped recipes open in a review step before saving. Ingredient names, quantities, units, servings, and the source URL can be corrected there, and duplicate ingredient names are removed while preserving their first occurrence.
   - Enter manually — title, ingredients, and instructions.
+  - Ingredients use structured name, numeric quantity, and optional unit fields. Quantities support decimals and cooking fractions such as `1/2` and `1 1/2` in the interface.
   - Instructions are **only ever typed in by hand**, never scraped, on purpose.
 - **Planner** — manage an editable calendar with breakfast, lunch, and dinner slots for each day. Choose a saved recipe for any slot, replace it, or clear it. Start a new 1-, 2-, or 4-week calendar when needed.
 - **All Recipes** — browse everything you've saved, with full edit and delete support.
 - **Recipe search and sorting** — search by title or ingredient as you type, then sort by alphabetical order, ingredient count, or date added. Mark recipes as **staples** to keep them pinned at the top without automatically adding them to the Plan.
 - **Recipe detail view** — click any recipe (Planner or All Recipes) to see its ingredients and instructions. Editing/deleting is only available from All Recipes.
 - **Grocery List** — automatically built from whatever's currently on your Plan (no manual re-selecting), with a shopping checklist so you can check off what you've already got. Recipe names and quantities are hidden by default for a simpler shopping view; enable the checkbox to show them.
+- **Ingredient and unit handling** — common volume, weight, count, and informal cooking units are supported. Ingredients shared across planned recipes are combined when their unit families are compatible; incompatible units are shown separately rather than being incorrectly converted or summed.
+- **Staples** — keep frequently used recipes pinned at the top of All Recipes without automatically adding them to the meal plan. The built-in Staples recipe cannot be deleted.
 - **Responsive layout** — all tabs share a wider desktop layout and adapt to phones and other smaller screens.
 - **Database backups** — a script to safely back up the SQLite database using SQLite's own backup API (safe to run while the app is live).
+
+## Finding Compatible Recipe URLs
+
+The scraper works best with direct recipe pages that expose Schema.org `Recipe` JSON-LD containing a `name` and `recipeIngredient` array. Pages that require a login, depend on heavy client-side rendering, contain no recipe JSON-LD, or use mostly vague ingredient measurements may not import successfully.
+
+Use [prompt.txt](prompt.txt) with another AI chat to find recipe URLs that match these requirements. The prompt asks for direct, verifiable recipe pages and does not ask the other AI to reproduce the recipe; Manje-Lakay fetches and parses the URL itself.
 
 ---
 
@@ -56,6 +66,7 @@ manje-lakay/
 │       └── recipe-modal.js # Shared recipe detail/edit popup
 ├── scripts/
 │   └── backup_db.py       # Database backup utility
+├── prompt.txt             # Prompt for finding scraper-compatible recipe URLs
 ├── data/
 │   ├── manje_lakay.db     # SQLite database (created automatically)
 │   └── backups/            # Timestamped backups (created by backup_db.py)
@@ -71,6 +82,8 @@ manje-lakay/
 - **Backend:** FastAPI, Uvicorn, SQLAlchemy, SQLite
 - **Frontend:** Jinja2 templates, vanilla JavaScript, plain CSS -- no frontend framework or build step
 - **Scraping/parsing:** `requests`, `beautifulsoup4` (JSON-LD extraction), `ingredient_parser_nlp` (local ingredient-name cleanup)
+
+The scraper accepts JSON-LD represented as a single object, a list, or an `@graph` wrapper. It normalizes common unit names such as `tablespoon` to `tbsp`, `pound` to `lb`, and plural units to their standard singular form. It does not convert between volume and weight because that requires ingredient-specific density data.
 
 ---
 
@@ -188,3 +201,11 @@ Additional notes and tips:
 | All Recipes | `/all-recipes` | Every saved recipe, with edit/delete |
 
 The underlying JSON API lives at `/recipes`, `/calendar`, and `/grocery-list` (interactive docs at `/docs`).
+
+## 🔌 Recipe API Workflow
+
+- `POST /recipes/scrape-preview` fetches and parses a URL without changing the database.
+- The user reviews the returned structured ingredients and then sends the edited data to `POST /recipes/scrape-confirm`.
+- `POST /recipes/manual` creates a recipe from structured fields without scraping.
+- `PUT /recipes/{recipe_id}` replaces a recipe's ingredient list and editable details.
+- `DELETE /recipes/{recipe_id}` removes a recipe, except for the built-in Staples recipe.

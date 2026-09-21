@@ -1,0 +1,28 @@
+Find [NUMBER] recipe websites/pages for [TYPE OF FOOD, CUISINE, OR INGREDIENT] that are compatible with my Manje-Lakay recipe scraper.
+
+For each result, provide only:
+
+- Recipe title
+- Direct recipe-page URL
+- Website name
+- Approximate servings
+- A brief note explaining why it should be scraper-compatible
+
+Compatibility requirements:
+
+- The URL must lead directly to a single recipe page, not a search page, category page, homepage, video, or social-media post.
+- The page should contain embedded Schema.org `Recipe` JSON-LD metadata.
+- That JSON-LD should include:
+  - `name`
+  - `recipeIngredient`
+  - preferably `recipeYield`
+- The recipe ingredients should be written as conventional ingredient lines with clear quantities, such as “2 cups rice,” “3 cloves garlic,” or “1 lb chicken.”
+- Prefer recipes using common units such as tsp, tbsp, cup, ml, l, g, kg, oz, lb, pinch, clove, sprig, slice, stalk, and can.
+- Prefer recipes that do not rely heavily on vague measurements such as “some,” “a handful,” “as needed,” or “to taste.”
+- Avoid pages that require login, subscription access, or significant JavaScript before the recipe appears.
+- Avoid pages with multiple recipes embedded in the same page.
+- Avoid duplicate recipes and syndicated copies when possible.
+- Do not invent URLs. Only return URLs that you can verify as real, reachable recipe pages.
+- Do not reproduce the recipes or cooking instructions. I only need URLs for my scraper.
+
+Before listing a result, verify that the page appears to contain a Schema.org `Recipe` JSON-LD block with a usable `recipeIngredient` array. Clearly mark any result that could not be verified.
