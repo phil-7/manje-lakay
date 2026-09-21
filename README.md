@@ -128,6 +128,15 @@ Creates a timestamped copy in `data/backups/`, keeping the 14 most recent. Autom
 
 This repository includes a Docker Compose setup for running the app. Automatic image updates are disabled by default in this branch — updates are applied manually by the operator. The SQLite database file is stored in `./data` and is preserved across container restarts and replacements.
 
+To update a Docker deployment from the latest repository code, run this from the project root:
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+The `--build` flag makes sure the container includes the updated application files. The database in `./data` is preserved.
+
 Follow these step-by-step instructions to perform a safe manual update:
 
 1) Ensure Docker is running on the host and you are in the project root:
