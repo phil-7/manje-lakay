@@ -118,6 +118,13 @@ class CalendarSettings(Base):
     length_weeks = Column(Integer, nullable=False)
 
 
+class CustomGrocery(Base):
+    __tablename__ = "custom_groceries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+
+
 class CalendarEntry(Base):
     """
     One recipe scheduled in one meal slot on one date. Each day has

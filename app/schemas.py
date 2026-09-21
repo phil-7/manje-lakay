@@ -31,6 +31,17 @@ class GroceryListRequest(BaseModel):
     recipe_ids: list[int]
 
 
+class CustomGroceryCreate(BaseModel):
+    name: str
+
+
+class CustomGroceryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
 class ScrapedRecipePreview(BaseModel):
     """A scraped recipe that hasn't been saved yet -- nothing in the
     database is touched until the user confirms it via ScrapedRecipeConfirm."""

@@ -12,11 +12,11 @@ Built with FastAPI, SQLAlchemy, SQLite, and server-rendered Jinja2 templates.
   - Paste a URL — pulls ingredients from the page's embedded JSON-LD (schema.org `Recipe` markup), then cleans each line down to just the core ingredient name using a local NLP model (`ingredient_parser_nlp`) — no external API calls, no cost.
   - Enter manually — title, ingredients, and instructions.
   - Instructions are **only ever typed in by hand**, never scraped, on purpose.
-- **Planner** — manage an editable calendar with breakfast, lunch, and dinner slots for each day. Choose a saved recipe for any slot, replace it, or clear it. Start a new 1-, 2-, or 4-week calendar when needed.
+- **Planner** — manage an editable calendar with breakfast, lunch, and dinner slots for each day. Schedule recipes from your Plan, replace them, or clear them. Start a new 1-, 2-, or 4-week calendar when needed.
 - **All Recipes** — browse everything you've saved, with full edit and delete support.
 - **Recipe search and sorting** — search by title or ingredient as you type, then sort by alphabetical order, ingredient count, or date added. Mark recipes as **staples** to keep them pinned at the top without automatically adding them to the Plan.
 - **Recipe detail view** — click any recipe (Planner or All Recipes) to see its ingredients and instructions. Editing/deleting is only available from All Recipes.
-- **Grocery List** — automatically built from whatever's currently on your Plan (no manual re-selecting), with a shopping checklist so you can check off what you've already got. Recipe names and quantities are hidden by default for a simpler shopping view; enable the checkbox to show them.
+- **Grocery List** — automatically built from whatever's currently on your Plan (no manual re-selecting), with a shopping checklist so you can check off what you've already got. Add custom groceries that remain until you start a new calendar. Recipe names and quantities are hidden by default for a simpler shopping view; enable the checkbox to show them.
 - **Responsive layout** — all tabs share a wider desktop layout and adapt to phones and other smaller screens.
 - **Database backups** — a script to safely back up the SQLite database using SQLite's own backup API (safe to run while the app is live).
 
@@ -29,7 +29,7 @@ manje-lakay/
 ├── app/
 │   ├── main.py            # FastAPI app setup, routers, static files
 │   ├── database.py        # SQLAlchemy engine/session setup
-│   ├── models.py          # Recipe, Ingredient (SQLAlchemy models)
+│   ├── models.py          # Recipe, Ingredient, CustomGrocery (SQLAlchemy models)
 │   ├── schemas.py         # Pydantic request/response models
 │   ├── recipes.py         # Business logic: create/update/delete/toggle-plan
 │   ├── grocery.py         # Grocery list building logic
@@ -90,6 +90,10 @@ pip install -r requirements.txt
 ```
 
 ### 3. Run the app
+```powershell
+alembic upgrade head
+```
+
 ```powershell
 uvicorn app.main:app --reload
 ```
@@ -182,9 +186,9 @@ Additional notes and tips:
 
 | Page | Route | Purpose |
 |---|---|---|
-| Planner | `/` | Editable meal calendar, planned recipes, and saved recipes available to add |
+| Planner | `/` | Editable meal calendar and recipes currently on your Plan |
 | Add Recipe | `/add` | Add a new recipe, by URL or manually |
-| Grocery List | `/grocery` | Combined ingredient list and shopping checklist for everything on your plan |
+| Grocery List | `/grocery` | Combined ingredient list, custom groceries, and shopping checklist for everything on your plan |
 | All Recipes | `/all-recipes` | Every saved recipe, with edit/delete |
 
 The underlying JSON API lives at `/recipes`, `/calendar`, and `/grocery-list` (interactive docs at `/docs`).

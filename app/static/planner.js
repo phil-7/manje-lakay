@@ -2,7 +2,6 @@ const rangeEl = document.getElementById("calendar-range");
 const gridEl = document.getElementById("calendar-grid");
 const lengthButtons = document.querySelectorAll(".calendar-length-btn");
 const plannedListEl = document.getElementById("recipe-list");
-const availableListEl = document.getElementById("available-recipe-list");
 
 const MEAL_SLOTS = ["breakfast", "lunch", "dinner"];
 const SLOT_LABELS = { breakfast: "B", lunch: "L", dinner: "D" };
@@ -50,9 +49,12 @@ function renderGrid(view) {
 
         const select = document.createElement("select");
         select.className = "calendar-slot-select";
+        const calendarRecipes = allRecipes.filter((recipe) =>
+          recipe.is_planned || (entry && recipe.id === entry.recipe_id)
+        );
         select.innerHTML =
           `<option value="">--</option>` +
-          allRecipes.map((r) => `<option value="${r.id}">${r.title}</option>`).join("");
+          calendarRecipes.map((r) => `<option value="${r.id}">${r.title}</option>`).join("");
         select.value = entry ? String(entry.recipe_id) : "";
         select.addEventListener("change", () =>
           handleSlotChange(day.date, slot, select.value, entry ? entry.id : null)
@@ -146,35 +148,12 @@ function renderPlanned(recipes) {
   }
 }
 
-function renderAvailable(recipes) {
-  const available = recipes.filter((r) => !r.is_planned);
-  if (available.length === 0) {
-    availableListEl.innerHTML = `<p class="empty-state">Everything you've saved is already planned.</p>`;
-    return;
-  }
-
-  availableListEl.innerHTML = "";
-  for (const recipe of available) {
-    const item = document.createElement("div");
-    item.className = "recipe-item";
-    item.innerHTML = `
-      <span class="recipe-name">${recipe.title}</span>
-      <button type="button" class="toggle-plan-btn" data-id="${recipe.id}">Add to Plan</button>
-    `;
-    item.querySelector(".recipe-name").addEventListener("click", () =>
-      showRecipeModal(recipe, { editable: false })
-    );
-    item.querySelector(".toggle-plan-btn").addEventListener("click", () => togglePlan(recipe.id));
-    availableListEl.appendChild(item);
-  }
-}
-
 async function togglePlan(id) {
   await fetch(`/recipes/${id}/toggle-plan`, { method: "POST" });
   loadEverything();
 }
 
-// --- Load everything together, since scheduling can change is_planned ---
+// --- Load the calendar and current Plan together ---
 
 async function loadEverything() {
   try {
@@ -192,13 +171,11 @@ async function loadEverything() {
 
     renderGrid(view);
     renderPlanned(allRecipes);
-    renderAvailable(allRecipes);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     rangeEl.textContent = "Planner unavailable";
     gridEl.innerHTML = `<p class="empty-state">Couldn't load your plan (${message}).</p>`;
     plannedListEl.innerHTML = "";
-    availableListEl.innerHTML = "";
   }
 }
 

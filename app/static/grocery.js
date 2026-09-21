@@ -2,6 +2,8 @@ const summaryEl = document.getElementById("planned-summary");
 const resultsEl = document.getElementById("grocery-results");
 const showRecipesCheckbox = document.getElementById("show-recipes-checkbox");
 const resetChecklistBtn = document.getElementById("reset-checklist-btn");
+const customGroceryForm = document.getElementById("custom-grocery-form");
+const customGroceryName = document.getElementById("custom-grocery-name");
 const SHOPPING_CHECKED_KEY = "manje-lakay-shopping-checked";
 const SHOPPING_RESET_KEY = "manje-lakay-shopping-reset";
 let groceryItems = [];
@@ -21,6 +23,16 @@ function saveCheckedItems(checkedItems) {
 function formatAmount(entry) {
   const qty = entry.quantity != null ? formatAsFraction(entry.quantity) : "";
   return [qty, entry.unit].filter(Boolean).join(" ");
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character]);
 }
 
 function renderGroceryList(items) {
@@ -45,17 +57,28 @@ function renderGroceryList(items) {
     const entryLines = item.entries
       .map((entry) => {
         const amount = formatAmount(entry);
-        return `<li><span class="entry-amount">${amount}</span><span class="entry-recipe">-- ${entry.recipe}</span></li>`;
+        return `<li><span class="entry-amount">${escapeHtml(amount)}</span><span class="entry-recipe">-- ${escapeHtml(entry.recipe)}</span></li>`;
       })
       .join("");
 
     row.innerHTML = `
       <input type="checkbox" class="have-it-checkbox" ${checkedItems[item.ingredient] ? "checked" : ""} />
       <div class="grocery-item-text">
-        <span class="grocery-item-name">${item.ingredient} ${warning}</span>
+        <span class="grocery-item-name">${escapeHtml(item.ingredient)} ${warning}</span>
         <ul class="grocery-item-entries">${entryLines}</ul>
       </div>
     `;
+    if (item.custom_id) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "remove-custom-grocery-btn";
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", async () => {
+        await fetch(`/grocery-list/custom/${item.custom_id}`, { method: "DELETE" });
+        loadGroceryList();
+      });
+      row.appendChild(removeButton);
+    }
     const checkbox = row.querySelector(".have-it-checkbox");
     row.classList.toggle("checked-off", checkbox.checked);
     checkbox.addEventListener("change", (e) => {
@@ -77,16 +100,23 @@ async function loadGroceryList() {
   try {
     // Always pull the CURRENT plan fresh -- this is what makes the page
     // reflect whatever was most recently checked/unchecked on Planner.
-    const plannedResponse = await fetch("/recipes?planned=true");
+    const [plannedResponse, customResponse] = await Promise.all([
+      fetch("/recipes?planned=true"),
+      fetch("/grocery-list/custom"),
+    ]);
     const plannedRecipes = await plannedResponse.json();
+    const customGroceries = await customResponse.json();
 
-    if (plannedRecipes.length === 0) {
+    if (plannedRecipes.length === 0 && customGroceries.length === 0) {
       summaryEl.innerHTML = `<p class="empty-state">Nothing planned yet. Add recipes to your Plan first.</p>`;
       resultsEl.innerHTML = "";
       return;
     }
 
-    summaryEl.innerHTML = `<p class="hint">For: ${plannedRecipes.map((r) => r.title).join(", ")}</p>`;
+    const summary = plannedRecipes.length
+      ? `For: ${plannedRecipes.map((r) => escapeHtml(r.title)).join(", ")}`
+      : "Custom groceries only";
+    summaryEl.innerHTML = `<p class="hint">${summary}</p>`;
 
     const recipeIds = plannedRecipes.map((r) => r.id);
     const groceryResponse = await fetch("/grocery-list", {
@@ -95,7 +125,13 @@ async function loadGroceryList() {
       body: JSON.stringify({ recipe_ids: recipeIds }),
     });
     const items = await groceryResponse.json();
-    renderGroceryList(items);
+    const customItems = customGroceries.map((grocery) => ({
+      ingredient: grocery.name,
+      entries: [],
+      mixed_units: false,
+      custom_id: grocery.id,
+    }));
+    renderGroceryList([...items, ...customItems]);
   } catch (err) {
     resultsEl.innerHTML = `<p class="empty-state">Couldn't load your grocery list. Is the server running?</p>`;
   }
@@ -118,5 +154,21 @@ showRecipesCheckbox.addEventListener("change", () => {
 });
 
 resultsEl.classList.toggle("hide-recipe-names", !showRecipesCheckbox.checked);
+
+customGroceryForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const response = await fetch("/grocery-list/custom", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: customGroceryName.value }),
+  });
+  if (!response.ok) {
+    const data = await response.json();
+    window.alert(data.detail || "Couldn't add that grocery.");
+    return;
+  }
+  customGroceryName.value = "";
+  loadGroceryList();
+});
 
 loadGroceryList();

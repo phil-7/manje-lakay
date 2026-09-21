@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from app.models import Recipe
+from app.models import CustomGrocery, Recipe
 from app.units import unit_family
 
 
@@ -46,3 +46,27 @@ def build_grocery_list(db: Session, recipe_ids: list[int]) -> list[dict]:
             }
         )
     return items
+
+
+def list_custom_groceries(db: Session) -> list[CustomGrocery]:
+    return db.query(CustomGrocery).order_by(CustomGrocery.name.asc()).all()
+
+
+def add_custom_grocery(db: Session, name: str) -> CustomGrocery:
+    cleaned_name = " ".join(name.strip().split())
+    if not cleaned_name:
+        raise ValueError("name must not be empty")
+
+    grocery = CustomGrocery(name=cleaned_name)
+    db.add(grocery)
+    db.commit()
+    db.refresh(grocery)
+    return grocery
+
+
+def remove_custom_grocery(db: Session, grocery_id: int) -> None:
+    grocery = db.query(CustomGrocery).filter_by(id=grocery_id).first()
+    if grocery is None:
+        raise ValueError(f"Custom grocery {grocery_id} not found")
+    db.delete(grocery)
+    db.commit()

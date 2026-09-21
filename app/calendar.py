@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.models import CalendarEntry, CalendarSettings, Recipe
+from app.models import CalendarEntry, CalendarSettings, CustomGrocery, Recipe
 
 VALID_LENGTHS = {1, 2, 4}
 MEAL_SLOTS = ["breakfast", "lunch", "dinner"]
@@ -43,6 +43,7 @@ def start_new_calendar(db: Session, length_weeks: int) -> CalendarSettings:
         raise ValueError(f"length_weeks must be one of {sorted(VALID_LENGTHS)}")
 
     db.query(CalendarEntry).delete()
+    db.query(CustomGrocery).delete()
 
     settings = db.query(CalendarSettings).filter_by(id=1).first()
     if settings is None:
@@ -123,6 +124,8 @@ def add_calendar_entry(
     recipe = db.query(Recipe).filter_by(id=recipe_id).first()
     if recipe is None:
         raise ValueError(f"Recipe {recipe_id} not found")
+    if not recipe.is_planned:
+        raise ValueError("Only recipes on your Plan can be scheduled")
 
     existing = (
         db.query(CalendarEntry)
